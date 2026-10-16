@@ -1,174 +1,132 @@
 Synapse
 =======
 
-A small digital spiking network on a DE10-Nano. A neuron does nothing until a spike arrives. The spike meets a weight stored at the synapse, the membrane moves, and the neuron fires only if it crosses a threshold. A dense clocked matrix engine that updates every synapse on every tick is the baseline. The result that matters is how much work disappears when most neurons are silent.
+A graduate hardware study on one DE10-Nano. The neuron model is settled. The open question is which delivery microarchitecture keeps a spiking network correct when the fabric cannot service every spike in time.
+
+Hypothesis. With one leaky-integrate-and-fire datapath per core, a fixed block-RAM budget, and a fixed number of clocks per timestep, a placement of neurons that cuts cross-core spikes preserves accuracy farther up the firing-rate curve than a smarter overload policy does. Past the rate where the single datapath itself saturates, placement and policy converge, because the core runs out of arithmetic before it runs out of routing.
+
+That sentence is the project. It can be false. The writeup reports the crossover if it exists and reports that it does not if the curves never separate.
 
 
-What neuromorphic means here
-----------------------------
+Position
+--------
 
-A neuromorphic circuit copies the event rule, not the biology. Loihi and Akida are digital chips that do this. So is this one, at a much smaller size.
+Digital neuromorphic chips already time-multiplex. TrueNorth and Loihi emulate many logical neurons on fewer physical updates, and they move spikes as address events. This design does not invent that pattern. It holds the silicon budget still and varies three choices those chips make differently: where neurons sit, which late spike is kept, and how decay is applied so idle neurons are not visited.
 
-    A synapse holds a strength.
-    Most of the time it is idle.
-    A spike is a pulse from one neuron to another, not a number streamed every clock.
-    When a spike arrives, that synapse adds its strength into the target neuron.
-    The neuron leaks while it waits.
-    If its membrane crosses a threshold, it emits its own spike and resets.
-    If two spikes land close together in time, the synapse changes its own strength.
-
-A clock still exists. FPGA fabric is synchronous, and so are Loihi's tiles. The clock is a time base. It is not permission to multiply. A neuron with no incoming spike and no pending leak update does not touch its weight memory and does not toggle its multiplier. If every neuron spikes on every tick, this machine has collapsed back into a dense matrix engine, and the measurements should say so.
-
-This is not a brain, a memristor, or an analog membrane. The membrane is a register. The weight is int8 bits. The spike is a packet. The physics that would make a resistance do the multiply is a different project.
+The deliverable is an ablation on one chip, not a new biological learning rule and not a tape-out. Quartus area numbers, cycle counters, and agreement with an infinite-budget reference are the evidence.
 
 
-The neuron
-----------
+Fixed budget
+------------
 
-Discrete leaky integrate-and-fire. One register for the membrane, one for a refractory countdown.
+These stay constant across every point in the study. Changing them is a different experiment.
 
-    v      membrane, wider than the weights so sums do not wrap by accident
-    r      refractory counter
-    decay  leak factor, a right-shift or a small integer multiply, fixed for the whole array
-    vth    threshold
-    vreset value written back after a spike
+    4 cores
+    1 physical LIF datapath per core
+    the same on-chip RAM budget for synaptic records and neuron state
+    the same clock count per timestep
+    int8 weights, integer membrane, the same threshold, reset, and refractory
 
-On a timestep where neuron i receives a set of spikes:
+Logical population is what scales: 256, 1024, and 4096 neurons, sparse, on the order of ten synapses each. If 4096 does not fit in the Cyclone V block RAM, the largest population that fits is the top of the sweep, and the overflow is a reported limit.
 
-    if r > 0:
-        r = r - 1
-        v stays put
-    else:
-        v = decay(v) + sum of the weights on the synapses that just spiked
-        if v >= vth:
-            emit a spike packet for i
-            v = vreset
-            r = refractory period
-
-decay(v) is the leak. Silence does not freeze the membrane forever. A neuron that received one spike and then nothing slowly falls back, and it must not fire later from a stale value. The golden model uses the same decay, the same threshold, and the same reset. Spike times that disagree are a bug.
-
-The sum is the only multiply-accumulate, and it runs only for synapses whose source spiked. A silent source contributes nothing and costs no read.
+The physical datapath is a single pipeline that reads one neuron's state from block RAM, applies the spikes due this tick, writes the state back, and moves on. One hundred logical neurons on a core are one hundred turns of that pipeline, not one hundred copies of the adder.
 
 
-The spike
+Lazy leak
 ---------
 
-A spike is a packet, not a sample.
+A leak applied to every logical neuron every timestep forces the pipeline to visit everyone, which erases the event rule and makes the hypothesis trivial. Decay is lazy.
 
-    time        timestep index
-    source id   which neuron fired
-    target id   filled in by the router when the spike is fanned out
+Each neuron stores v and the timestep when v was last written. On the next touch at time t:
 
-Input spikes arrive from the host as a list of (time, source id), played in order. Output spikes leave as a list of (time, neuron id). Address-event representation is the name of this: the address of the neuron that fired, plus when.
+    gap = t - last_t
+    v = decay_gap(v)
+    last_t = t
+    then add the weights delivered at time t
 
-The router is the hard piece. One firing neuron has many outgoing synapses. The router walks that neuron's outgoing list and produces one update per target. A 64-neuron core with dense connectivity has 64 outgoing weights per source, and only the sources that fired are walked. The walk is a burst of local reads, then idle.
+decay_gap is a fixed-point approximation of repeated decay, built from shifts, exact against the Python model for every gap the sweep can produce. A neuron whose membrane only shrinks cannot cross threshold because of leak alone, so untouched neurons do not need a visit. A visit happens because a spike is delivered or because a delayed spike comes due.
 
-A central weight matrix that is scanned from row 0 to row 63 on every timestep, including the silent rows, is the dense baseline in disguise. The event-driven path's address sequence should show only rows of neurons that spiked.
-
-
-Where the weight lives
-----------------------
-
-Each synapse is a word in a memory that belongs to the connection.
-
-    source i, target j  ->  weight[i][j]   int8
-                            last_pre[i]    timestep of i's most recent spike
-                            last_post[j]   timestep of j's most recent spike
-
-For 64 neurons the matrix is 64 by 64 bytes, 4 KB, plus the two timestamp tables. That fits in block RAM easily. DRAM is not the experiment. The experiment is whether a silent row is read at all.
-
-On an incoming spike from i, the datapath reads weight[i][*] for the fanout and adds each weight into the matching membrane. It does not read weight[k][*] for a k that did not fire.
-
-The bits are still ordinary SRAM. A weight of 6 is the cell pattern 00000110. What makes it a synapse in this design is the rule for touching it: a spike opens that row, and spike timing can rewrite it. Between spikes the cells just hold.
+The approximation is part of the work. A decay that matches Python for a gap of 1 and drifts at a gap of 30 will silently change who fires. The testbench sweeps gaps.
 
 
-Learning on the synapse
------------------------
+Placement
+---------
 
-Pair-based spike-timing-dependent plasticity, rectangular window, integer step. No exponential curve in analog hardware.
+The synapse graph is partitioned onto the four cores before a run.
 
-When neuron j fires at time t:
+    Random. Neurons are dealt out round-robin. This is the control.
+    Cut. A greedy partitioner groups neurons that share synapses onto the same core, then balances population so one core does not inherit the pipeline.
 
-    for each source i that spiked recently enough to still be inside the window:
-        dt = t - last_pre[i]
-        if 0 < dt <= window:
-            weight[i][j] = saturate(weight[i][j] + plus_step)
+The partitioner runs in software on the ARM or offline. It writes a core id per neuron and rebuilds each core's sparse list so local targets stay local and remote targets become packets.
 
-When the pre spike is the later one, the symmetric case decreases the weight:
+Measured for each placement, at each population and each firing rate:
 
-    if j fired recently and i fires now:
-        dt = t - last_post[j]
-        if 0 < dt <= window:
-            weight[i][j] = saturate(weight[i][j] - minus_step)
+    fraction of synapses that cross cores
+    packets injected
+    pipeline turns used
+    undelivered work at the timestep boundary
+    agreement with the infinite-budget reference
 
-The host does not perform this update. The timestamps live next to the weight, and the write lands in that same memory during the spike that caused it. Saturation keeps the int8 word in range. The Python model applies the same window and the same steps, and the on-chip weights after a run must match.
-
-This is the part that was missing from a multiply-accumulate array. The connection changes because of the traffic through it. The rule is a deliberately crude STDP, a fixed step inside a time window, which is still the real pair-based rule used in digital neuromorphic designs. It is not a claim about biological protein chemistry.
+The cut is not allowed to change weights or delays. If accuracy moves, it moves because traffic moved.
 
 
-The dense baseline
-------------------
+Overload policy
+----------------
 
-Same 64 neurons, same weights, same LIF parameters, same spikes. Different access rule. Every timestep, every synapse is visited:
+When the clock budget hits zero, unfinished deliveries still exist. Three policies, same placement, same budget:
 
-    for every target:
-        v = decay(v) + sum over all sources of (weight[source][target] * fired[source])
+    Defer. Leftover packets stay queued and apply on a later timestep. Delivery time slips. STDP windows slip with them.
+    Drop-oldest. The oldest unfinished packet is discarded. A counter records the loss.
+    Drop-smallest. Among unfinished packets, the one with the smallest absolute weight is discarded. Large synapses are kept.
 
-fired[source] is 0 or 1. The multiply by zero still reads the weight and still clocks the adder. That is the point of the baseline. It does the full matrix on every tick the way a normal accelerator does.
+All three are implemented in the same queue. The policy is a mode bit. A policy that is really "defer" with a different name will show identical undelivered counts and identical outputs, and that bug is visible in the table.
 
-Both engines must emit the same spike list on a run with no STDP, because multiplying by zero does not change the math. With STDP off and the same initial weights, a spike mismatch is a bug. With STDP on, both engines must also match each other and the Python model. The event-driven engine is allowed to skip the zero terms. It is not allowed to skip a term that would have changed v.
-
-
-What gets counted
------------------
-
-Spikes in, spikes out, and the timestep of each. Match against the Python LIF.
-
-Synaptic reads. Event-driven count equals the number of spikes times the fanout. Dense count equals neurons times neurons times timesteps, whether or not anyone fired. These two counts are the result.
-
-Fraction of cycles the weight memory's read enable is low. A logic analyzer or a counter on that enable is the evidence. A design that asserts read-enable every clock and then throws the data away has not implemented the event rule.
-
-A sparsity sweep. Feed the same network spike trains with a duty cycle from very sparse to every neuron firing every tick. Plot synaptic reads of the event-driven core against the flat line of the dense core. The event-driven core should win while spikes are rare and lose the advantage, or pay its router overhead in the open, when spikes are constant. A sweep that only shows the sparse end is incomplete.
-
-Weight snapshots before and after a coincidence pattern, matched to the Python STDP. Two inputs that spike just before an output spike should end with a larger weight. Two inputs in the reverse order should end smaller. A pattern outside the window should leave the weight unchanged.
+The dense reference does not use these policies. It applies every due synapse at a fixed cost and defines correct spikes when the budget is not the constraint.
 
 
-A concrete run
+Correctness oracle
+-------------------
+
+Python holds the infinite-budget network: same lists, same delays, same lazy decay, same rectangular STDP on delivery times. Wide-open hardware mode must match its spike times and its final weights. Any mismatch there is a bug, and no accuracy number from that bitstream is usable.
+
+Tight-budget runs are allowed to diverge. Divergence is reported as spike-time distance and, on the classifier, as class accuracy against the labels, not against a story about why the chip "still understood."
+
+
+Task and sweep
 --------------
 
-Three neurons. Neuron 0 and neuron 1 are inputs. Neuron 2 is the one that might fire. Threshold is 10. Reset is 0. Decay subtracts 1 per timestep, floored at 0. Refractory is 0 for this walk-through. Weights start at w[0][2] = 6 and w[1][2] = 6. Window is 3 timesteps. Plus step is 1.
+Unit tests before any sweep: one delayed spike, a lazy leak over a long gap, a local synapse, a remote synapse, each overload policy on a burst that is one packet too long, STDP inside the window and outside it, a partition that moves one edge from remote to local.
 
-    t = 0
-        spike from 0
-        only row 0 is read
-        v2 = 0 + 6 = 6
-        6 < 10, no output spike
-        last_pre[0] = 0
+Then the grid:
 
-    t = 1
-        no input spike
-        no weight row is read
-        v2 = 6 - 1 = 5
+    population: three sizes, up to what block RAM holds
+    rate: sparse Poisson through a burst that saturates the pipeline
+    placement: random, cut
+    policy: defer, drop-oldest, drop-smallest
+    budget: the fixed study budget, plus the wide-open bug-check
 
-    t = 2
-        spike from 1
-        only row 1 is read
-        v2 = 5 + 6 = 11
-        11 >= 10, neuron 2 fires, v2 = 0
-        last_pre[1] = 2
-        last_post[2] = 2
-        STDP: source 0 spiked at t = 0, dt = 2, inside the window
-        w[0][2] = 6 + 1 = 7
-        source 1 spiked at the same time as the post spike, dt = 0, the window requires dt > 0, so w[1][2] stays 6
+The classifier is small and offline-trained. Output class comes from spike counts of a designated set of neurons. Training is a tool. The hardware result is accuracy under the grid above.
 
-The dense engine at t = 1 still reads both rows, multiplies by zero, and also lands on v2 = 5. Same membrane, extra reads. At t = 2 it reads both rows again. The event-driven engine has read a row only on t = 0 and t = 2.
+STDP stays on during the sweep, using delivery time. A second sweep with STDP off separates "the router dropped spikes" from "learning walked away because delivery times moved." Both tables are required. One of them is expected to be the less flattering one.
 
-That single extra read on the silent tick is the whole phenomenon, made large by using 64 neurons and long silences.
+
+What the result has to contain
+------------------------------
+
+A table of cross-core fraction, pipeline occupancy, undelivered packets, and accuracy for every cell of the grid.
+
+The firing rate, if any, where cut-plus-defer beats random-plus-drop-smallest by a margin larger than run-to-run variation. Poisson inputs are repeated for several seeds.
+
+The firing rate, if any, where all six hardware combinations sit on top of each other because the pipeline is full. If the curves never meet, the hypothesis is wrong and the plot is still the result.
+
+Quartus counts for ALMs, block RAM, and DSP blocks of the final configuration. An extra datapath built "to make the demo smoother" is a changed budget and voids the comparison.
+
+Counters on the board, not a cycle estimate from a slide: read-enable lows, packets sent, packets dropped, packets deferred, pipeline turns, timesteps that ended with work left.
 
 
 What this is not
 ----------------
 
-A 4 by 4 systolic GEMM with a stall register. A web page. An analog crossbar. A claim that 64 digital neurons approximate a brain. They do not.
+A new neuron model. An analog membrane. A memristor array. A claim that a few thousand multiplexed neurons are a brain. They are a scheduled pipeline with a packet queue.
 
-The machine is neuromorphic because silence is skipped, spikes are the only messages, and a synapse rewrites its own weight from the time between spikes. The host loads the initial weights and the input spike list, then reads the output spikes and the final weights. It does not sit in the inner loop.
+Graduate, here, means the outcome is an answer to the hypothesis under a budget you refused to raise. A demo that only shows the sparse, wide-open corner is the undergraduate version of this same chip.
