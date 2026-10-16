@@ -1,132 +1,134 @@
 Synapse
 =======
 
-A graduate hardware study on one DE10-Nano. The neuron model is settled. The open question is which delivery microarchitecture keeps a spiking network correct when the fabric cannot service every spike in time.
-
-Hypothesis. With one leaky-integrate-and-fire datapath per core, a fixed block-RAM budget, and a fixed number of clocks per timestep, a placement of neurons that cuts cross-core spikes preserves accuracy farther up the firing-rate curve than a smarter overload policy does. Past the rate where the single datapath itself saturates, placement and policy converge, because the core runs out of arithmetic before it runs out of routing.
-
-That sentence is the project. It can be false. The writeup reports the crossover if it exists and reports that it does not if the curves never separate.
+Identify one digit, 0 through 9, from an n×n grid of light cells. Each cell turns light into a single bit. Each digit owns a weight for every cell. The digit with the largest weighted sum of the bits is the prediction.
 
 
-Position
+The cell
 --------
 
-Digital neuromorphic chips already time-multiplex. TrueNorth and Loihi emulate many logical neurons on fewer physical updates, and they move spikes as address events. This design does not invent that pattern. It holds the silicon budget still and varies three choices those chips make differently: where neurons sit, which late spike is kept, and how decay is applied so idle neurons are not visited.
+One analog circuit per cell. The parts are a light-dependent resistor, a fixed resistor, a capacitor, a reset switch, and a comparator.
 
-The deliverable is an ablation on one chip, not a new biological learning rule and not a tape-out. Quartus area numbers, cycle counters, and agreement with an infinite-budget reference are the evidence.
+    Vdd
+     |
+    LDR          resistance falls when light hits it
+     |
+     +-- VL -- C to ground
+     |         Rb to ground
+     |         Reset switch to ground
+     |
+    Rser
+     |
+     +-------- comparator + input
+     |              comparator - input is VTH
+     Rh             comparator output is Vo
+     |
+    Vo
 
+LDR and Rb are a divider. Their midpoint is VL.
 
-Fixed budget
-------------
+    VL settles toward  Vdd * Rb / (Rb + LDR)
 
-These stay constant across every point in the study. Changing them is a different experiment.
+Bright light makes LDR small, so VL rises toward Vdd. Darkness makes LDR large, so VL falls toward 0. That is the opposite of a series resistor in front of a stiff voltage source. A stiff source charges every capacitor to the same final voltage, and the resistor only changes the speed. Here the light changes the final voltage, which is what makes a lit cell different from a dark one.
 
-    4 cores
-    1 physical LIF datapath per core
-    the same on-chip RAM budget for synaptic records and neuron state
-    the same clock count per timestep
-    int8 weights, integer membrane, the same threshold, reset, and refractory
+C sits on VL. It holds the voltage and slows the edges, so a brief shadow or a flicker does not flip the bit by itself. Reset is a switch across C. Before each frame it shorts VL to ground, so a cell that was 1 on the previous digit can become 0.
 
-Logical population is what scales: 256, 1024, and 4096 neurons, sparse, on the order of ten synapses each. If 4096 does not fit in the Cyclone V block RAM, the largest population that fits is the top of the sweep, and the overflow is a reported limit.
+The comparator watches VL against a threshold VTH. Vo is a logic 1 when VL is above VTH and a logic 0 when it is below. The capacitor node drives the comparator input that sends Vo high. VTH drives the other input.
 
-The physical datapath is a single pipeline that reads one neuron's state from block RAM, applies the spikes due this tick, writes the state back, and moves on. One hundred logical neurons on a core are one hundred turns of that pipeline, not one hundred copies of the adder.
-
-
-Lazy leak
----------
-
-A leak applied to every logical neuron every timestep forces the pipeline to visit everyone, which erases the event rule and makes the hypothesis trivial. Decay is lazy.
-
-Each neuron stores v and the timestep when v was last written. On the next touch at time t:
-
-    gap = t - last_t
-    v = decay_gap(v)
-    last_t = t
-    then add the weights delivered at time t
-
-decay_gap is a fixed-point approximation of repeated decay, built from shifts, exact against the Python model for every gap the sweep can produce. A neuron whose membrane only shrinks cannot cross threshold because of leak alone, so untouched neurons do not need a visit. A visit happens because a spike is delivered or because a delayed spike comes due.
-
-The approximation is part of the work. A decay that matches Python for a gap of 1 and drifts at a gap of 30 will silently change who fires. The testbench sweeps gaps.
+Rh is a resistor from Vo back to the comparator's signal input, on the far side of a small series resistor Rser. The capacitor itself is a low impedance, so feedback tied directly across C does nothing useful. Rser gives the feedback a place to shift the effective threshold. When Vo is 1, the bar to fall back to 0 is a little lower than the bar that was required to become 1. The bit does not chatter when VL sits on the threshold.
 
 
-Placement
----------
+What the bit means
+------------------
 
-The synapse graph is partitioned onto the four cores before a run.
+A cell is not measuring how bright the ink is, past the threshold. Everything above VTH is 1. Everything below is 0. Gray becomes whichever side of the threshold it landed on.
 
-    Random. Neurons are dealt out round-robin. This is the control.
-    Cut. A greedy partitioner groups neurons that share synapses onto the same core, then balances population so one core does not inherit the pipeline.
+A correct 1 requires all of these at the sample moment:
 
-The partitioner runs in software on the ARM or offline. It writes a core id per neuron and rebuilds each core's sparse list so local targets stay local and remote targets become packets.
+    the cell is actually lit
+    LDR has fallen enough that VL can exceed VTH
+    enough time has passed for C to follow VL
+    Reset is open
 
-Measured for each placement, at each population and each firing rate:
-
-    fraction of synapses that cross cores
-    packets injected
-    pipeline turns used
-    undelivered work at the timestep boundary
-    agreement with the infinite-budget reference
-
-The cut is not allowed to change weights or delays. If accuracy moves, it moves because traffic moved.
+A correct 0 requires the complementary case: darkness, or light too weak to reach VTH, with C discharged from the previous frame. Ambient light that lifts every LDR partway will push dark cells over VTH and paint 1s where the digit has no stroke.
 
 
-Overload policy
-----------------
+The grid
+--------
 
-When the clock budget hits zero, unfinished deliveries still exist. Three policies, same placement, same budget:
+n by n of those bits, captured on the same frame, is the image. A practical discrete build is 5 by 5. That is 25 analog cells. 8 by 8 is 64 cells and is mostly wiring. The bits are read together after Reset has been released and C has had time to settle.
 
-    Defer. Leftover packets stay queued and apply on a later timestep. Delivery time slips. STDP windows slip with them.
-    Drop-oldest. The oldest unfinished packet is discarded. A counter records the loss.
-    Drop-smallest. Among unfinished packets, the one with the smallest absolute weight is discarded. Large synapses are kept.
+The digit is supposed to fill the grid, stay centered, and be much brighter than an empty cell. The grid does not search a page for a digit. It classifies the one pattern already sitting on the cells.
 
-All three are implemented in the same queue. The policy is a mode bit. A policy that is really "defer" with a different name will show identical undelivered counts and identical outputs, and that bug is visible in the table.
-
-The dense reference does not use these policies. It applies every due synapse at a fixed cost and defines correct spikes when the budget is not the constraint.
+Number the cells in row-major order. A 5 by 5 frame is a vector x of 25 bits. x_i is 1 if cell i is lit.
 
 
-Correctness oracle
--------------------
+The weights
+-----------
 
-Python holds the infinite-budget network: same lists, same delays, same lazy decay, same rectangular STDP on delivery times. Wide-open hardware mode must match its spike times and its final weights. Any mismatch there is a bug, and no accuracy number from that bitstream is usable.
+Each digit d from 0 to 9 has a weight vector w_d with one weight per cell. The score is the dot product
 
-Tight-budget runs are allowed to diverge. Divergence is reported as spike-time distance and, on the classifier, as class accuracy against the labels, not against a story about why the chip "still understood."
+    score(d) = sum over i of  w_d,i * x_i
+
+The predicted digit is the d with the largest score. Ties are reported as ties, not silently awarded to the smaller index.
+
+Weights come from example frames, then they are frozen. A direct choice is the average bit vector of the examples of that digit, optionally shifted so a cell that is lit for every digit carries little weight. A cell that is lit only for an 8 should carry a large positive weight on the 8 and a small or negative weight on the digits that are dark there. Negative weights are allowed. They let a lit cell vote against a digit.
+
+The weights are not inside the analog cell. LDR is the sensor. The weight is a number applied after Vo exists. Mixing those two jobs, by trying to make the resistor both the light sensor and the digit weight, makes the threshold depend on which digit is being tested. The circuit senses first. The sum runs after the bits exist.
+
+Worked on three cells, not a full grid. Suppose the bits are
+
+    x = [1, 0, 1]
+
+and two digits own
+
+    w_0 = [ 1,  1, -1 ]
+    w_1 = [ 1, -1,  1 ]
+
+    score(0) = 1*1 + 0*1 + 1*(-1) = 0
+    score(1) = 1*1 + 0*(-1) + 1*1 = 2
+
+The prediction is 1. The middle cell is dark, so its weights never enter the sum. The third cell is lit, which counts for digit 1 and against digit 0.
 
 
-Task and sweep
+What a frame is
+---------------
+
+    1. Close Reset. Every capacitor is forced to ground. Every Vo that was high is released once VL falls through the hysteresis band.
+    2. Open Reset. Light on each LDR starts charging that cell's C.
+    3. Wait a fixed settle time, the same every frame.
+    4. Read all n×n comparator outputs into the bit vector x.
+    5. Compute the ten scores. Emit x and the winning digit.
+
+The settle time is part of the design. Too short and a lit cell is still below VTH. Too long is harmless for this divider, because VL stops at the divider voltage rather than climbing forever. The time has to be long enough for the dimmest stroke that should still count as lit.
+
+
+Where it works
 --------------
 
-Unit tests before any sweep: one delayed spike, a lazy leak over a long gap, a local synapse, a remote synapse, each overload policy on a burst that is one packet too long, STDP inside the window and outside it, a partition that moves one edge from remote to local.
+One digit, one font or one stroke style, centered, high contrast, grid size matched to the digit. Under those conditions the same cells light for the same digit, the scores separate, and the winner repeats.
 
-Then the grid:
+It fails when the lit cells move off the weights:
 
-    population: three sizes, up to what block RAM holds
-    rate: sparse Poisson through a burst that saturates the pipeline
-    placement: random, cut
-    policy: defer, drop-oldest, drop-smallest
-    budget: the fixed study budget, plus the wide-open bug-check
+    the digit is shifted by a cell
+    the digit is larger or smaller than the examples
+    the stroke is much thicker or thinner
+    the digit is handwritten in a style the weights never saw
+    ambient light turns empty cells on
+    a threshold differs from cell to cell, so the same brightness is 1 on one cell and 0 on its neighbor
 
-The classifier is small and offline-trained. Output class comes from spike counts of a designated set of neurons. Training is a tool. The hardware result is accuracy under the grid above.
-
-STDP stays on during the sweep, using delivery time. A second sweep with STDP off separates "the router dropped spikes" from "learning walked away because delivery times moved." Both tables are required. One of them is expected to be the less flattering one.
-
-
-What the result has to contain
-------------------------------
-
-A table of cross-core fraction, pipeline occupancy, undelivered packets, and accuracy for every cell of the grid.
-
-The firing rate, if any, where cut-plus-defer beats random-plus-drop-smallest by a margin larger than run-to-run variation. Poisson inputs are repeated for several seeds.
-
-The firing rate, if any, where all six hardware combinations sit on top of each other because the pipeline is full. If the curves never meet, the hypothesis is wrong and the plot is still the result.
-
-Quartus counts for ALMs, block RAM, and DSP blocks of the final configuration. An extra datapath built "to make the demo smoother" is a changed budget and voids the comparison.
-
-Counters on the board, not a cycle estimate from a slide: read-enable lows, packets sent, packets dropped, packets deferred, pipeline turns, timesteps that ended with work left.
+A 5 by 5 binary picture is also a coarse image. An 8 and a 0 differ by a few middle cells. One flipped bit in that region can swap the winner. That is a property of the representation, not a tuning error.
 
 
-What this is not
-----------------
+What is built
+-------------
 
-A new neuron model. An analog membrane. A memristor array. A claim that a few thousand multiplexed neurons are a brain. They are a scheduled pipeline with a packet queue.
+The analog grid, the reset line shared across cells, and the readout of the bits.
 
-Graduate, here, means the outcome is an answer to the hypothesis under a budget you refused to raise. A demo that only shows the sparse, wide-open corner is the undergraduate version of this same chip.
+A fixed table of ten weight vectors.
+
+A score step that produces the ten numbers and the argmax.
+
+Evidence that a centered high-contrast digit of each class produces its own largest score, and that a shifted or washed-out frame does not have to. Both outcomes belong in the result. A demo that only shows the ten clean digits is incomplete.
+
+The earlier spiking-network study is not this project. This one has no spikes, no router, and no on-chip learning. The capacitor is only the memory of one cell's brightness for one frame.
