@@ -1,1 +1,227 @@
-.
+Synapse
+=======
+
+A small digital model of a synapse, built on an FPGA, placed next to a small digital model of an ordinary computer, both running the same arithmetic. The thing being studied is where a number lives while it is used.
+
+
+The problem
+-----------
+
+Since the 1940s a computer has kept the processor in one place and the memory in another, with a bus between them. An operation is: put an address on the bus, wait, receive a word, do a small piece of math, often send a word back. The processor can only do the math after the word arrives. For a neural network the inner loop is enormous and almost uniform:
+
+    sum = sum + input[i] * weight[i]
+
+The multiply is a few gates. The weight is a stored number that must be present at the multiplier's input. On a normal machine that number lives in a memory array reached by an address and a bus, and the machine must also fetch the instruction that says to do the multiply. Engineers call the resulting wait the memory wall. Inference spends more time and energy moving weights than multiplying them.
+
+A brain does not have this split. A synapse is the connection and the memory at the same time. It holds a strength, and when a signal arrives it scales that signal by the strength stored on itself. The strength does not travel to a distant arithmetic unit. Billions of synapses do this concurrently, on about 20 watts.
+
+Industry chases the same split from two directions. Compute-in-memory puts a little arithmetic inside the memory array, sometimes as a modified DRAM, sometimes as a crossbar of non-volatile devices (memristors, ReRAM, phase-change memory, MRAM) whose conductance is the stored weight. Ohm's law at the crosspoint does the multiply, and currents summing on a column do the add, in one physical step. Neuromorphic chips (Intel Loihi, BrainChip Akida) copy the other half of the brain's behavior: units that sit idle until an input changes, then fire a spike. Both are real silicon programs. Fabricating a chip is a foundry job. The way those architectures get prototyped before silicon is an FPGA. That prototype, made very small, is this project.
+
+
+What we are making
+------------------
+
+Two engines in the FPGA fabric of a DE10-Nano (Cyclone V SoC), plus the on-chip ARM core as the thing that loads numbers and reads results.
+
+Engine A is a synapse array. Four processing elements. Each element owns a private memory and a private int8 multiply-accumulate. The weight it needs is a word in its own memory. The read port of that memory is wired to the multiplier. Using a weight is a local read, then a multiply, then an add into a local accumulator.
+
+Engine B is a von Neumann baseline. One multiply-accumulate unit. All weights live in one shared memory. Every use of a weight drives an address and then waits D clocks before the word is allowed to reach the multiplier. D is a register the ARM core writes. It is a model of bus and DRAM latency, not a DRAM controller. At D = 1 the two engines are close. As D grows, Engine B spends its time waiting and Engine A does not. Same weights, same inputs, same math, different place the weight lives.
+
+Both engines carry a cycle counter. It starts when the host pulses start and stops when done rises. The result of the project is those two counts, and the class the network produced, checked against a Python program that does the identical integer arithmetic.
+
+
+What a processing element is
+----------------------------
+
+A processing element is not a processor. It has no program counter, no instruction memory, and no decoder. It is a fixed datapath:
+
+    weight  <- local memory, selected by an index
+    product <- input * weight
+    acc     <- acc + product
+
+The wiring is the instruction. An element built this way can only multiply and accumulate. It cannot branch, load an arbitrary address on a shared bus, or decide to subtract instead. That fixedness is the point. A CPU spends cycles announcing what it is about to do. This block spends the clock doing the only thing it was built to do.
+
+Inside the Cyclone V the local memory is block RAM (M10K): a small SRAM placed in the fabric, with a read port whose wires run to a DSP multiplier a short distance away. The weight is ordinary digital bits. A 32-bit or int8 word sits in a cell, a decoder selects it, sense amplifiers produce the bits, and those bits arrive at the multiplier inputs. Nothing about that read is analog or biological. The resemblance to a synapse is the floorplan: the stored value and the arithmetic touch.
+
+A biological synapse stores strength as the state of a living connection (receptors, conductance). A research memristor crossbar stores strength as a resistance at a wire crossing, and the current that flows is the product. Our element stores strength as an int8 word in block RAM and uses a digital multiplier. Three different physics, one arrangement: the value used in the math is already at the math.
+
+
+How it knows which numbers to use
+----------------------------------
+
+It does not know. It consumes whatever is on its wires.
+
+The operation is fixed by construction, as above. The operands are whoever wrote them:
+
+- The weight register or block-RAM word was written by the ARM host before the run. Writing 5 there is what makes the stored strength a 5. Writing 10 there makes the next run use 10. The element never compares these cases.
+- The input is driven onto the element for this step by the host or by the previous stage. A 6 on that wire combines with the stored 5. A 12 combines with whatever strength is stored.
+
+So "do 5 + 6 rather than 10 + 12" is not a decision inside the synapse. It is the contents of the local memory and the value on the input wire at that clock. The chooser is outside: training picked the weights, and the input vector picked the signal.
+
+Worked in 32-bit form, the local storage is just registers beside the adder:
+
+    R_a   = 0x00000005
+    R_b   = 0x00000006
+    clock: R_acc <= R_a + R_b
+
+Replace the register contents and the sum changes. There is no address calculation and no instruction word involved in that clock.
+
+The same idea scaled to the real datapath, which is a multiply-accumulate rather than a bare add:
+
+    w     = local_mem[i]          // int8 strength for this input
+    acc   = acc + input[i] * w
+
+i walks the inputs. For four elements, i walks in lockstep, and each element reads its own local_mem[i]. One input value is broadcast to all four. Each element holds a different row of weights, so each produces a different sum. Those four sums are the four hidden units of the network.
+
+
+What the ordinary machine does with the same add
+-------------------------------------------------
+
+On a 32-bit von Neumann machine the numbers and the program share one memory and one bus. A clock can fetch an instruction word or a data word, not both. A word already in that memory returns in one clock. The ALU adds in one clock once both operands are in registers.
+
+    Address   Contents
+    0x0000    LOAD R1, [0x1000]
+    0x0004    LOAD R2, [0x1004]
+    0x0008    ADD  R3, R1, R2
+    0x000C    STORE R3, [0x1008]
+    0x1000    0x00000005
+    0x1004    0x00000006
+    0x1008    result
+
+Cycles for 5 + 6 under that model:
+
+    Fetch LOAD, read 0x1000 into R1     2
+    Fetch LOAD, read 0x1004 into R2     2
+    Fetch ADD, R3 = R1 + R2             1
+    Fetch STORE, write R3 to 0x1008     2
+    Total                               7
+
+The synapse element, with both values already in local registers, takes 1 clock. The adder's own delay is 1 clock in both machines. The other 6 clocks moved 32-bit words: four instruction fetches and two data transfers, with the store included in the 7.
+
+CPI and IPC describe instruction streams, so they belong to the CPU:
+
+    4 instructions / 7 clocks
+    CPI = 1.75
+    IPC = 4/7 ≈ 0.57
+
+The processing element retires no instructions. Scored against the same 4 instructions of work, its equivalent IPC is 4 and its equivalent CPI is 0.25. The comparison that does not depend on that translation is cycles per add: 7 versus 1.
+
+A pipelined core with cache hits overlaps instruction fetch, and the same four instructions land nearer 5 clocks plus pipeline fill. The element is still 1 clock, because it had no instructions to overlap. If 5 and 6 are already in CPU registers, the CPU also adds them in one clock. The gap opens when the operand lives in memory.
+
+The network loop widens it. One multiply-accumulate on that same single-bus model is roughly two loads, a multiply, an add, two address bumps, and a branch: about 7 instruction fetches and 2 data reads, near 9 clocks, for one `acc += input * weight`. The element does that step in 1 clock, because the weight read is local and the operation is the wiring. If a streamed weight misses cache and each DRAM access costs about 10 clocks, the CPU's loads dominate and the local element stays at 1 clock. D, the fetch-delay knob on Engine B, exists so this wait can be dialed in and plotted without building a memory controller.
+
+
+The network
+-----------
+
+The workload is a tiny multilayer perceptron, sized to the four elements.
+
+    inputs:        8 to 16 int8 values
+    hidden layer:  4 units, one per processing element
+    outputs:       2 to 4 classes
+
+Each hidden unit computes a dot product of the input vector with its own weight row, then a bias, then a trivial activation the FPGA can do with integer compare or saturate logic. The output layer is small enough to run on the same elements in a second pass or on the ARM. The class is the output with the largest sum.
+
+Weights are trained in PyTorch in floating point, then quantized to int8 and written to a plain file. A Python function runs the same int8 loop and records the accumulator values and the class. That function is the source of truth. The Verilog testbench and the board both have to match it. A mismatch is a hardware bug, not a modeling disagreement.
+
+int8 is the width because the FPGA's DSP blocks multiply integers natively, because four to sixteen such weights fit in a tiny block RAM with room to spare, and because the quantization error is visible and checkable against the floating-point training run. The cycle story is unchanged at 32 bits. Narrower data only changes the width of the bus the von Neumann side would have moved.
+
+
+The host's job
+--------------
+
+The ARM core (the hard processor system on the Cyclone V) is outside the metaphor. It is the programmer, the trainer's hands, and the measuring instrument.
+
+Over an Avalon memory-mapped register block it can:
+
+    write each element's block RAM
+    write the shared weight memory of the baseline
+    write one input vector
+    write D
+    pulse start
+    read done, both cycle counters, and the class
+
+It loads the int8 file, runs both engines on a fixed set of vectors, and prints a line a laptop can read:
+
+    in_memory_cycles, baseline_cycles, delay, class, match
+
+The laptop page draws D against the two cycle counts, and which of the four elements produced a nonzero activation. The page is a view of the counters. The claim lives in the counters.
+
+The host choosing the weights is also the honest stand-in for learning. In this design, learning happens offline. The element never updates its own memory during a run. A brain's synapse changes its strength because it was used. That mechanism is not in this machine.
+
+
+What this shares with a brain
+-----------------------------
+
+As a brain, about 0%. As the textbook model of one synapse, about 30%.
+
+A brain has on the order of 100 trillion synapses. Each passes pulses, changes its own strength with use, and stays quiet until a pulse arrives. This machine has four clocked integer units. The 30% is the computational skeleton people already use when they write `output += input * weight` and mean a connection:
+
+    Holds a strength on the connection
+        Yes. An int8 word in a private RAM beside the multiplier.
+
+    Scales the arriving signal by that strength and folds it into a sum
+        Yes. The accumulator is the neuron's running sum, stripped of
+        membrane leak, threshold, and spikes.
+
+    Uses the strength without carrying it to a distant arithmetic unit
+        Yes. This is the quantity the cycle counters measure.
+
+    Fires a pulse and otherwise sits idle
+        No. A clock runs the datapath when the host raises start.
+        Spike-driven idleness is the neuromorphic half of the field,
+        and it is not this design.
+
+    Changes its own strength from the traffic through it
+        No. PyTorch and the host rewrite the RAM. Plasticity is absent.
+
+    Chemical transmission, spike timing, dendritic location, analog current
+        No. The weight is bits. The product is a digital multiply.
+        A memristor crossbar would replace the multiply with conductance.
+        This project does not.
+
+The four hidden units are four synapses-worth of parallel connections onto a toy layer, not a circuit of neurons. Broadcasting one input to four local weight memories is the smallest version of "many connections react to the same signal at once."
+
+
+What the two memories are, physically, on this chip
+----------------------------------------------------
+
+Engine A, per element. A private block RAM. Depth equals the number of inputs plus a bias slot. Width is 8 bits. One read port. The address is the step index, generated by the element's own counter, not by a program. On each clock the port emits weight[i] into the multiplier. The input for that step is a broadcast register. The accumulator is a wider signed register so the products can pile up without wrapping away the class. Four of these RAMs hold four rows of the hidden weight matrix. They are not a cache of a larger memory. They are the memory.
+
+Engine B. One shared block RAM holding the same bytes. One MAC. A small state machine issues an address, waits D clocks, then multiplies. The wait is empty cycles inserted on purpose, standing in for a bus that is busy and a memory that is far away. The bytes can be bit-identical to Engine A. The difference is the wait and the fact that one multiplier serves all four rows by visiting them in series, whereas Engine A has four multipliers visiting four private memories at once.
+
+Serial versus parallel is part of the result, and it should stay visible in the counts. Four local elements finish a hidden layer in about "number of inputs" clocks, because the four dot products overlap. One shared MAC finishes in about "4 times number of inputs, times (1 + D)" clocks. Even at D = 0 the single MAC is behind, because there is one of it. D then stretches only the baseline. Reporting both effects matters: parallelism of synapses, and the cost of fetching a weight that is not local. They are different ideas and the counters can separate them if the baseline can also be given four MACs sharing one delayed memory. The delayed shared memory, not the lack of a second multiplier, is the memory wall. A fair wall measurement gives both engines the same number of multipliers and varies only where the weight comes from and how long it takes to arrive.
+
+
+What a correct result looks like
+--------------------------------
+
+The class matches the Python int8 model on the fixed vectors.
+
+The in-memory cycle count stays flat as D increases.
+
+The baseline cycle count rises linearly with D.
+
+At D = 1 the two counts are close if both engines have the same number of multipliers. They are far apart if the baseline is intentionally one MAC. Either experiment is worth running, and they answer different questions. The memory-wall question is the flat line versus the rising line.
+
+A wrong result is a class mismatch, a cycle count that moves with D on the local-memory engine, or a baseline that ignores D. Those mean the weight is not actually local, or the delay is not actually on the fetch path.
+
+
+Ideas this design is allowed to grow into
+------------------------------------------
+
+These are deeper versions of the same machine, not a schedule.
+
+More elements. Eight or sixteen private memories, still one weight row each, to show the parallel count scaling while the baseline's shared memory does not.
+
+A second pass that reuses the same elements for the output layer, by reloading a different local image of weights. That makes the element look more like a synapse that can be retargeted, and it makes the host's writes part of the measured story if the reload cost is counted.
+
+A fetch-delay applied to a multi-MAC baseline that shares one weight port. That isolates the bus from the "we only built one multiplier" effect.
+
+An activity map driven by the accumulators: an element that stayed at zero is a silent connection. That is as close as a clocked int8 datapath gets to "quiet until involved," and it is still not a spike.
+
+A weight reload from a new file without resynthesizing, so a second trained network can inhabit the same synapses. The hardware stays the wiring. The memory contents become the model.
+
+A recorded input vector from a real sensor, in place of a synthetic test vector. The datapath does not change. The input wire simply carries a measured quantity.
+
+Spike timing, on-element learning, analog conductance, a separate microcontroller, and a networked telemetry system are different machines. They answer questions this design is not answering. The question this design answers is: if the strength sits on the connection, how many clocks of fetching disappear, on a 32-bit-style bus model, for a network small enough to check by hand.
