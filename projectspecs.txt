@@ -1,174 +1,134 @@
 Synapse
 =======
 
-A small digital spiking network on a DE10-Nano. A neuron does nothing until a spike arrives. The spike meets a weight stored at the synapse, the membrane moves, and the neuron fires only if it crosses a threshold. A dense clocked matrix engine that updates every synapse on every tick is the baseline. The result that matters is how much work disappears when most neurons are silent.
+Identify one digit, 0 through 9, from an n×n grid of light cells. Each cell turns light into a single bit. Each digit owns a weight for every cell. The digit with the largest weighted sum of the bits is the prediction.
 
 
-What neuromorphic means here
-----------------------------
+The cell
+--------
 
-A neuromorphic circuit copies the event rule, not the biology. Loihi and Akida are digital chips that do this. So is this one, at a much smaller size.
+One analog circuit per cell. The parts are a light-dependent resistor, a fixed resistor, a capacitor, a reset switch, and a comparator.
 
-    A synapse holds a strength.
-    Most of the time it is idle.
-    A spike is a pulse from one neuron to another, not a number streamed every clock.
-    When a spike arrives, that synapse adds its strength into the target neuron.
-    The neuron leaks while it waits.
-    If its membrane crosses a threshold, it emits its own spike and resets.
-    If two spikes land close together in time, the synapse changes its own strength.
+    Vdd
+     |
+    LDR          resistance falls when light hits it
+     |
+     +-- VL -- C to ground
+     |         Rb to ground
+     |         Reset switch to ground
+     |
+    Rser
+     |
+     +-------- comparator + input
+     |              comparator - input is VTH
+     Rh             comparator output is Vo
+     |
+    Vo
 
-A clock still exists. FPGA fabric is synchronous, and so are Loihi's tiles. The clock is a time base. It is not permission to multiply. A neuron with no incoming spike and no pending leak update does not touch its weight memory and does not toggle its multiplier. If every neuron spikes on every tick, this machine has collapsed back into a dense matrix engine, and the measurements should say so.
+LDR and Rb are a divider. Their midpoint is VL.
 
-This is not a brain, a memristor, or an analog membrane. The membrane is a register. The weight is int8 bits. The spike is a packet. The physics that would make a resistance do the multiply is a different project.
+    VL settles toward  Vdd * Rb / (Rb + LDR)
 
+Bright light makes LDR small, so VL rises toward Vdd. Darkness makes LDR large, so VL falls toward 0. That is the opposite of a series resistor in front of a stiff voltage source. A stiff source charges every capacitor to the same final voltage, and the resistor only changes the speed. Here the light changes the final voltage, which is what makes a lit cell different from a dark one.
 
-The neuron
-----------
+C sits on VL. It holds the voltage and slows the edges, so a brief shadow or a flicker does not flip the bit by itself. Reset is a switch across C. Before each frame it shorts VL to ground, so a cell that was 1 on the previous digit can become 0.
 
-Discrete leaky integrate-and-fire. One register for the membrane, one for a refractory countdown.
+The comparator watches VL against a threshold VTH. Vo is a logic 1 when VL is above VTH and a logic 0 when it is below. The capacitor node drives the comparator input that sends Vo high. VTH drives the other input.
 
-    v      membrane, wider than the weights so sums do not wrap by accident
-    r      refractory counter
-    decay  leak factor, a right-shift or a small integer multiply, fixed for the whole array
-    vth    threshold
-    vreset value written back after a spike
-
-On a timestep where neuron i receives a set of spikes:
-
-    if r > 0:
-        r = r - 1
-        v stays put
-    else:
-        v = decay(v) + sum of the weights on the synapses that just spiked
-        if v >= vth:
-            emit a spike packet for i
-            v = vreset
-            r = refractory period
-
-decay(v) is the leak. Silence does not freeze the membrane forever. A neuron that received one spike and then nothing slowly falls back, and it must not fire later from a stale value. The golden model uses the same decay, the same threshold, and the same reset. Spike times that disagree are a bug.
-
-The sum is the only multiply-accumulate, and it runs only for synapses whose source spiked. A silent source contributes nothing and costs no read.
+Rh is a resistor from Vo back to the comparator's signal input, on the far side of a small series resistor Rser. The capacitor itself is a low impedance, so feedback tied directly across C does nothing useful. Rser gives the feedback a place to shift the effective threshold. When Vo is 1, the bar to fall back to 0 is a little lower than the bar that was required to become 1. The bit does not chatter when VL sits on the threshold.
 
 
-The spike
----------
-
-A spike is a packet, not a sample.
-
-    time        timestep index
-    source id   which neuron fired
-    target id   filled in by the router when the spike is fanned out
-
-Input spikes arrive from the host as a list of (time, source id), played in order. Output spikes leave as a list of (time, neuron id). Address-event representation is the name of this: the address of the neuron that fired, plus when.
-
-The router is the hard piece. One firing neuron has many outgoing synapses. The router walks that neuron's outgoing list and produces one update per target. A 64-neuron core with dense connectivity has 64 outgoing weights per source, and only the sources that fired are walked. The walk is a burst of local reads, then idle.
-
-A central weight matrix that is scanned from row 0 to row 63 on every timestep, including the silent rows, is the dense baseline in disguise. The event-driven path's address sequence should show only rows of neurons that spiked.
-
-
-Where the weight lives
-----------------------
-
-Each synapse is a word in a memory that belongs to the connection.
-
-    source i, target j  ->  weight[i][j]   int8
-                            last_pre[i]    timestep of i's most recent spike
-                            last_post[j]   timestep of j's most recent spike
-
-For 64 neurons the matrix is 64 by 64 bytes, 4 KB, plus the two timestamp tables. That fits in block RAM easily. DRAM is not the experiment. The experiment is whether a silent row is read at all.
-
-On an incoming spike from i, the datapath reads weight[i][*] for the fanout and adds each weight into the matching membrane. It does not read weight[k][*] for a k that did not fire.
-
-The bits are still ordinary SRAM. A weight of 6 is the cell pattern 00000110. What makes it a synapse in this design is the rule for touching it: a spike opens that row, and spike timing can rewrite it. Between spikes the cells just hold.
-
-
-Learning on the synapse
------------------------
-
-Pair-based spike-timing-dependent plasticity, rectangular window, integer step. No exponential curve in analog hardware.
-
-When neuron j fires at time t:
-
-    for each source i that spiked recently enough to still be inside the window:
-        dt = t - last_pre[i]
-        if 0 < dt <= window:
-            weight[i][j] = saturate(weight[i][j] + plus_step)
-
-When the pre spike is the later one, the symmetric case decreases the weight:
-
-    if j fired recently and i fires now:
-        dt = t - last_post[j]
-        if 0 < dt <= window:
-            weight[i][j] = saturate(weight[i][j] - minus_step)
-
-The host does not perform this update. The timestamps live next to the weight, and the write lands in that same memory during the spike that caused it. Saturation keeps the int8 word in range. The Python model applies the same window and the same steps, and the on-chip weights after a run must match.
-
-This is the part that was missing from a multiply-accumulate array. The connection changes because of the traffic through it. The rule is a deliberately crude STDP, a fixed step inside a time window, which is still the real pair-based rule used in digital neuromorphic designs. It is not a claim about biological protein chemistry.
-
-
-The dense baseline
+What the bit means
 ------------------
 
-Same 64 neurons, same weights, same LIF parameters, same spikes. Different access rule. Every timestep, every synapse is visited:
+A cell is not measuring how bright the ink is, past the threshold. Everything above VTH is 1. Everything below is 0. Gray becomes whichever side of the threshold it landed on.
 
-    for every target:
-        v = decay(v) + sum over all sources of (weight[source][target] * fired[source])
+A correct 1 requires all of these at the sample moment:
 
-fired[source] is 0 or 1. The multiply by zero still reads the weight and still clocks the adder. That is the point of the baseline. It does the full matrix on every tick the way a normal accelerator does.
+    the cell is actually lit
+    LDR has fallen enough that VL can exceed VTH
+    enough time has passed for C to follow VL
+    Reset is open
 
-Both engines must emit the same spike list on a run with no STDP, because multiplying by zero does not change the math. With STDP off and the same initial weights, a spike mismatch is a bug. With STDP on, both engines must also match each other and the Python model. The event-driven engine is allowed to skip the zero terms. It is not allowed to skip a term that would have changed v.
-
-
-What gets counted
------------------
-
-Spikes in, spikes out, and the timestep of each. Match against the Python LIF.
-
-Synaptic reads. Event-driven count equals the number of spikes times the fanout. Dense count equals neurons times neurons times timesteps, whether or not anyone fired. These two counts are the result.
-
-Fraction of cycles the weight memory's read enable is low. A logic analyzer or a counter on that enable is the evidence. A design that asserts read-enable every clock and then throws the data away has not implemented the event rule.
-
-A sparsity sweep. Feed the same network spike trains with a duty cycle from very sparse to every neuron firing every tick. Plot synaptic reads of the event-driven core against the flat line of the dense core. The event-driven core should win while spikes are rare and lose the advantage, or pay its router overhead in the open, when spikes are constant. A sweep that only shows the sparse end is incomplete.
-
-Weight snapshots before and after a coincidence pattern, matched to the Python STDP. Two inputs that spike just before an output spike should end with a larger weight. Two inputs in the reverse order should end smaller. A pattern outside the window should leave the weight unchanged.
+A correct 0 requires the complementary case: darkness, or light too weak to reach VTH, with C discharged from the previous frame. Ambient light that lifts every LDR partway will push dark cells over VTH and paint 1s where the digit has no stroke.
 
 
-A concrete run
+The grid
+--------
+
+n by n of those bits, captured on the same frame, is the image. A practical discrete build is 5 by 5. That is 25 analog cells. 8 by 8 is 64 cells and is mostly wiring. The bits are read together after Reset has been released and C has had time to settle.
+
+The digit is supposed to fill the grid, stay centered, and be much brighter than an empty cell. The grid does not search a page for a digit. It classifies the one pattern already sitting on the cells.
+
+Number the cells in row-major order. A 5 by 5 frame is a vector x of 25 bits. x_i is 1 if cell i is lit.
+
+
+The weights
+-----------
+
+Each digit d from 0 to 9 has a weight vector w_d with one weight per cell. The score is the dot product
+
+    score(d) = sum over i of  w_d,i * x_i
+
+The predicted digit is the d with the largest score. Ties are reported as ties, not silently awarded to the smaller index.
+
+Weights come from example frames, then they are frozen. A direct choice is the average bit vector of the examples of that digit, optionally shifted so a cell that is lit for every digit carries little weight. A cell that is lit only for an 8 should carry a large positive weight on the 8 and a small or negative weight on the digits that are dark there. Negative weights are allowed. They let a lit cell vote against a digit.
+
+The weights are not inside the analog cell. LDR is the sensor. The weight is a number applied after Vo exists. Mixing those two jobs, by trying to make the resistor both the light sensor and the digit weight, makes the threshold depend on which digit is being tested. The circuit senses first. The sum runs after the bits exist.
+
+Worked on three cells, not a full grid. Suppose the bits are
+
+    x = [1, 0, 1]
+
+and two digits own
+
+    w_0 = [ 1,  1, -1 ]
+    w_1 = [ 1, -1,  1 ]
+
+    score(0) = 1*1 + 0*1 + 1*(-1) = 0
+    score(1) = 1*1 + 0*(-1) + 1*1 = 2
+
+The prediction is 1. The middle cell is dark, so its weights never enter the sum. The third cell is lit, which counts for digit 1 and against digit 0.
+
+
+What a frame is
+---------------
+
+    1. Close Reset. Every capacitor is forced to ground. Every Vo that was high is released once VL falls through the hysteresis band.
+    2. Open Reset. Light on each LDR starts charging that cell's C.
+    3. Wait a fixed settle time, the same every frame.
+    4. Read all n×n comparator outputs into the bit vector x.
+    5. Compute the ten scores. Emit x and the winning digit.
+
+The settle time is part of the design. Too short and a lit cell is still below VTH. Too long is harmless for this divider, because VL stops at the divider voltage rather than climbing forever. The time has to be long enough for the dimmest stroke that should still count as lit.
+
+
+Where it works
 --------------
 
-Three neurons. Neuron 0 and neuron 1 are inputs. Neuron 2 is the one that might fire. Threshold is 10. Reset is 0. Decay subtracts 1 per timestep, floored at 0. Refractory is 0 for this walk-through. Weights start at w[0][2] = 6 and w[1][2] = 6. Window is 3 timesteps. Plus step is 1.
+One digit, one font or one stroke style, centered, high contrast, grid size matched to the digit. Under those conditions the same cells light for the same digit, the scores separate, and the winner repeats.
 
-    t = 0
-        spike from 0
-        only row 0 is read
-        v2 = 0 + 6 = 6
-        6 < 10, no output spike
-        last_pre[0] = 0
+It fails when the lit cells move off the weights:
 
-    t = 1
-        no input spike
-        no weight row is read
-        v2 = 6 - 1 = 5
+    the digit is shifted by a cell
+    the digit is larger or smaller than the examples
+    the stroke is much thicker or thinner
+    the digit is handwritten in a style the weights never saw
+    ambient light turns empty cells on
+    a threshold differs from cell to cell, so the same brightness is 1 on one cell and 0 on its neighbor
 
-    t = 2
-        spike from 1
-        only row 1 is read
-        v2 = 5 + 6 = 11
-        11 >= 10, neuron 2 fires, v2 = 0
-        last_pre[1] = 2
-        last_post[2] = 2
-        STDP: source 0 spiked at t = 0, dt = 2, inside the window
-        w[0][2] = 6 + 1 = 7
-        source 1 spiked at the same time as the post spike, dt = 0, the window requires dt > 0, so w[1][2] stays 6
-
-The dense engine at t = 1 still reads both rows, multiplies by zero, and also lands on v2 = 5. Same membrane, extra reads. At t = 2 it reads both rows again. The event-driven engine has read a row only on t = 0 and t = 2.
-
-That single extra read on the silent tick is the whole phenomenon, made large by using 64 neurons and long silences.
+A 5 by 5 binary picture is also a coarse image. An 8 and a 0 differ by a few middle cells. One flipped bit in that region can swap the winner. That is a property of the representation, not a tuning error.
 
 
-What this is not
-----------------
+What is built
+-------------
 
-A 4 by 4 systolic GEMM with a stall register. A web page. An analog crossbar. A claim that 64 digital neurons approximate a brain. They do not.
+The analog grid, the reset line shared across cells, and the readout of the bits.
 
-The machine is neuromorphic because silence is skipped, spikes are the only messages, and a synapse rewrites its own weight from the time between spikes. The host loads the initial weights and the input spike list, then reads the output spikes and the final weights. It does not sit in the inner loop.
+A fixed table of ten weight vectors.
+
+A score step that produces the ten numbers and the argmax.
+
+Evidence that a centered high-contrast digit of each class produces its own largest score, and that a shifted or washed-out frame does not have to. Both outcomes belong in the result. A demo that only shows the ten clean digits is incomplete.
+
+The earlier spiking-network study is not this project. This one has no spikes, no router, and no on-chip learning. The capacitor is only the memory of one cell's brightness for one frame.
