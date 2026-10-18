@@ -1,0 +1,53 @@
+For this project, UART configuration is used for data TX/RX. 
+
+The UART has the below characteristics
+1. 115200 baud rate
+2. IDLE == 'HIGH' by default
+3. No parity bit 
+4. No flow control
+5. Bit order by LSB
+
+"CLKS_PER_BIT" is the board's clock divided by 115,200.  
+
+Since the clock operating Fmax is 50 MHz, we say that the tick time is 20ns.
+For 115200 baud, 115200 bits are transmitted a second, so one bit on the wire occupies 8,681 ns. 
+
+Thus, 8,681 ns / 20 ns = 434.03 or approximately 434. 
+
+This means that there are 434 clocks per UART bit. The counter waits 434 ticks, or 8.68 microseconds
+and then moves to the next bit. 
+
+The FPGA has a TX pin and the adapter has an RX pin.
+The FPGA has an RX pin and the adapter has a TX pin.
+This implies full-duplex communication, so the adapter and FPGA can communicate bidirectionally, simultaneously. 
+Then, there's a common ground (GND).
+
+Packet Fields:
+Sync, size = 1, Value = 0xA5
+Opcode, size = 1, see below 
+Length, size = 1, ct. payload bytes 
+Payload, size = length, command data
+Checksum, size = 1, XOR of every preceding byte 
+
+Host-to-Board Communications: 
+Opcode = 0x01, 'PING', empty payload, reply = ACK
+Opcode = 0x02, 'FRAME', 8 bytes/8x8 image, reply = ACK
+Opcode = 0x03, 'WEIGHTS', 65 bytes payload, reply = 'ACK'
+Opcoed = 0x04, 'RUN', empty payload, reply = 'RESULT'
+
+A bad packet is answered with the 'NACK' signal
+
+Frame is an 8x8 grid of cells. '0' implies LOW, '1' implies HIGH. Can be either 8'b0 or 8'b1, communicated from software --> hardware.
+
+Weights are digits 0-9, with corresponding weights for each digit for each of the 64 cells. Thus, one digit (e.g. 0) has 64 * 1 byte of data for the weights.
+
+Board-to-Host Communications:
+Opcode = 0x81, 'PONG', 1 byte payload
+Opcode = 0x82, 'ACK', 1 byte payload
+Opcode = 0x83, 'RESULT', 22 byte payload
+Opcode = 0x84, 'NACK', 1 byte payloaod 
+
+Reasons for a 'NACK' signal 
+1. bad checksum 
+2. unknown opcode 
+3. length does not match opcode 
