@@ -1,0 +1,11 @@
+# vsim -c uart_tx_tb -do "run -all; quit -f" 
+# Start time: 03:40:19 on Oct 19,2026
+# Loading sv_std.std
+# Loading work.uart_tx_tb
+# Loading work.uart_tx
+# run -all
+# uart_tx: 0x55 0xA5 0x00 0xFF matched, 434 clocks per bit
+# ** Note: $finish    : tb/uart_tx_tb.sv(88)
+#    Time: 347451 ns  Iteration: 0  Instance: /uart_tx_tb
+# End time: 03:40:19 on Oct 19,2026, Elapsed time: 0:00:00
+# Errors: 0, Warnings: 0
