@@ -22,7 +22,7 @@ module uart_tx #(
 
     always_ff @(posedge clk) begin
         if (rst) begin
-            state     <= S_IDLE;
+            state     <= S_IDLE; // go to IDLE when reset 
             tx        <= 1'b1;
             busy      <= 1'b0;
             clk_count <= '0;
