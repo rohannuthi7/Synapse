@@ -1,9 +1,12 @@
-1. Since x(i) is either 1'b0 or 1'b1, a dark cell adds nothing. Software could keep only the lit cells and send the weights that sit on those cells. The 1 is implied, so the pair is (cell index, weight), and the FPGA just adds the weights it receives. No multiply, and no division by 64. Dividing every score by 64 would not change the winner.
+Food for Thought #1: Since xi is either 1’b0 or 1’b1, a dark cell adds no value. 
+Thus, using logic to compute multiplies and sums with it is pointless and takes additional space on the FPGA that could otherwise be avoided. 
+Software could keep only the lit cells and send the weights that correspond to those lit cells. 
+Since ‘1’ is implied, and 1 * a = a, having a pair {cell index, weight} would let it merely take weights into memory and load those. 
+Then, it would compute sums using a hierarchical adder system from L0-L5 (6 levels, just like now). 
+This would prevent the need for dedicated hardware to multiply units and division by 64. 
+Since dividing by 64 does not change the winner, since a/64 vs. b/64 … vs. j/64 is equivalent to a vs. b … vs. j, there’s no need for a hardware division unit. 
 
-Seventeen lit cells is not seventeen weights. Each lit cell has one weight per digit, so 17 × 10 = 170 weight bytes. Sending every weight plus the 8-byte picture is 640 + 8 = 648 bytes. Against that, 170 is the smaller message.
-
-It is the smaller message only when the weights are sent again on every frame. The stored map is smaller still. Load all 640 weights once. After that, each new picture is 8 bytes, and the chip already knows which weight belongs to which cell. 170 bytes every frame costs more than 8.
-
-The L0–L5 tree does not shrink with the list. It is built for 64 inputs: 32 adders, then 16, 8, 4, 2, and 1. Seventeen weights use that tree only if the other 47 inputs are filled with 0 on the chip. The adders left off the wire are still in the hardware.
-
-The match between a lit cell and its weight is the step the stored grid was built to do. Doing that match in software turns the FPGA into an adder for a bag of numbers. We kept the full picture and the full weight maps. The sparse list is a real contraction, and this design is the whole dot product on purpose.
+The L0-L5 tree does not shrink. It’s meant for 64 inputs, and theoretically 64 cells could be lit, so contracting that is counterintuitive and risky. 
+However, the hierarchical adder can work nonetheless by using hardwired ‘0’ for unused inputs. 
+The logic becomes shakier when having an odd number of lit cells, as it’s intended to handle an even 64 inputs in theory. 
+The sparse list is a real contraction, and the design is the whole dot product for a reason.
