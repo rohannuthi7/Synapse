@@ -1,0 +1,61 @@
+m255
+K4
+z2
+!s11f MIXED_VERSIONS
+13
+!s112 1.1
+!i10d 8192
+!i10e 25
+!i10f 100
+cModel Technology
+Z0 dC:/synapse/Synapse
+vuart_tx
+Z1 DXx6 sv_std 3 std 0 22 VYECXdT12H8WgbUP_5Y6:3
+Z2 !s110 1792399218
+!i10b 1
+!s100 FRk9bjDCQHjIEROHM6VSh1
+Z3 !s11b Dg1SIo80bB@j0V0VzS_@n1
+I>PzWiSFRR0ZD=Xmg_WWn:1
+Z4 VDg1SIo80bB@j0V0VzS_@n1
+S1
+R0
+w1792399152
+8rtl/uart_tx.sv
+Frtl/uart_tx.sv
+!i122 1
+L0 1 85
+Z5 OV;L;2020.1;71
+r1
+!s85 0
+31
+Z6 !s108 1792399217.000000
+!s107 tb/uart_tx_tb.sv|rtl/uart_tx.sv|
+Z7 !s90 -sv|rtl/uart_tx.sv|tb/uart_tx_tb.sv|
+!i113 1
+o-sv
+Z8 tCvgOpt 0
+vuart_tx_tb
+R1
+R2
+!i10b 1
+!s100 B0P8g6nN;4dA^[gP;K_W32
+R3
+IBY]>6V5B5<8=gloZ;2_OB0
+R4
+S1
+R0
+w1792399198
+8tb/uart_tx_tb.sv
+Ftb/uart_tx_tb.sv
+!i122 1
+L0 3 88
+R5
+r1
+!s85 0
+31
+R6
+Z9 !s107 tb/uart_tx_tb.sv|rtl/uart_tx.sv|
+R7
+!i113 1
+o-sv
+R8
