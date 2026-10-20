@@ -8,7 +8,7 @@ When the router receives a post request, it validates the incoming image's (name
 
 
 
-### InferentResponse Shape based on Schema
+### InferenceResponse Shape based on Schema
 
 ```json
 {
