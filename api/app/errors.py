@@ -23,3 +23,13 @@ class ImageDimensionsTooLargeError(SynapseError):
 
 class InvalidImageError(SynapseError):
     code = "INVALID_IMAGE"
+
+
+# A problem with the uploaded picture (blank, too faint, or just noise), so it
+# is a client error, not a server error.
+class NoDigitFoundError(SynapseError):
+    code = "NO_DIGIT_FOUND"
+    status_code = 400
+
+    def __init__(self, message: str = "Could not find a digit in the image.") -> None:
+        super().__init__(message)

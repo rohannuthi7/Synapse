@@ -4,7 +4,11 @@ import struct
 import numpy as np
 from PIL import Image, ImageOps, UnidentifiedImageError
 
-from app.errors import ImageDimensionsTooLargeError, InvalidImageError
+from app.errors import (
+    ImageDimensionsTooLargeError,
+    InvalidImageError,
+    NoDigitFoundError,
+)
 
 # Phone photos are roughly 12-48 MP; this bounds the memory a decode can use
 # before we unpack any pixels.
@@ -17,6 +21,22 @@ Image.MAX_IMAGE_PIXELS = MAX_PIXELS
 # Midpoint of the 0-255 brightness scale: a border brighter than this is
 # treated as paper, darker as a blackboard.
 BRIGHT_BACKGROUND_CUTOFF = 127.5
+
+# Training digits have space around them. A whole-number percent lets the
+# margin use integer math.
+MARGIN_PERCENT = 10
+
+# A row or column only counts as ink with at least this many ink pixels, so
+# one dust speck cannot stretch the box.
+MIN_INK_PIXELS = 2
+
+# The ink group's average must be at least this much brighter than the paper
+# group's. Otsu always returns SOME cutoff, even on a blank page or pure noise,
+# so this check is what turns "above the cutoff" into "significantly brighter".
+MIN_INK_CONTRAST = 50
+
+# The later downsample step splits the square into 8x8 equal boxes.
+SIDE_MULTIPLE = 8
 
 
 def decode(data: bytes) -> Image.Image:
@@ -166,3 +186,101 @@ def otsu_threshold(grid: np.ndarray) -> float:
     # is the sensible answer.
     tied = np.flatnonzero(np.isclose(score, score.max(), rtol=1e-9))
     return float((tied[0] + tied[-1]) / 2)
+
+
+def _find_ink_box(mask: np.ndarray) -> tuple[int, int, int, int] | None:
+    """Return (top, bottom, left, right), all inclusive, or None if no ink."""
+    # Mixing the axes up fails silently: summing over axis=1 collapses each
+    # row to one number (length = height); axis=0 does that per column
+    # (length = width).
+    row_counts = mask.sum(axis=1)
+    col_counts = mask.sum(axis=0)
+    rows = np.where(row_counts >= MIN_INK_PIXELS)[0]
+    cols = np.where(col_counts >= MIN_INK_PIXELS)[0]
+    if rows.size == 0 or cols.size == 0:
+        return None
+    return int(rows[0]), int(rows[-1]), int(cols[0]), int(cols[-1])
+
+
+def _pad_to_square(cropped: np.ndarray, background: int) -> np.ndarray:
+    """Center the crop in a square with a margin; side is a multiple of 8."""
+    height, width = cropped.shape
+    longest = max(height, width)
+    # Integer ceiling division (-(-a // b)) throughout: a float like
+    # longest * 1.2 can land on 72.00000000000001 and silently jump to the next
+    # multiple of 8.
+    margin = -(-longest * MARGIN_PERCENT // 100)
+    side = longest + 2 * margin
+    side = -(-side // SIDE_MULTIPLE) * SIDE_MULTIPLE
+
+    pad_y = side - height
+    pad_x = side - width
+    # The far side takes the remainder, not pad // 2 again, or odd padding
+    # would come up one pixel short of square.
+    top = pad_y // 2
+    left = pad_x // 2
+    return np.pad(
+        cropped,
+        ((top, pad_y - top), (left, pad_x - left)),
+        mode="constant",
+        constant_values=background,
+    )
+
+
+def crop_and_center(grid: np.ndarray) -> np.ndarray:
+    """Return a square uint8 grid holding just the digit, centered, with a margin.
+
+    Expects an ink-bright grid (from normalize_polarity). Side is a multiple of
+    8 and at least 8, still full resolution and 0-255. Raises NoDigitFoundError
+    when there is no clearly brighter ink. Known limits, left on purpose:
+    uneven lighting is not handled, and centering uses the bounding box, not
+    the center of mass (a possible later improvement).
+    """
+    if grid.ndim != 2 or grid.size == 0:
+        raise ValueError("Expected a non-empty 2D grid.")
+    # Catches a stray 0.0-1.0 float grid passed in by mistake.
+    if grid.dtype != np.uint8:
+        raise ValueError(f"Expected a uint8 grid, got {grid.dtype}.")
+
+    mask = grid > otsu_threshold(grid)
+    if not mask.any() or mask.all():
+        raise NoDigitFoundError()
+    if grid[mask].mean() - grid[~mask].mean() < MIN_INK_CONTRAST:
+        raise NoDigitFoundError()
+
+    box = _find_ink_box(mask)
+    if box is None:
+        raise NoDigitFoundError()
+    top, bottom, left, right = box
+
+    # Pad with the paper's brightness so the padding blends in; the median keeps
+    # stray marks from skewing it.
+    background = int(np.median(grid[~mask]))
+    # +1 because slice ends are exclusive but the box is inclusive.
+    cropped = grid[top : bottom + 1, left : right + 1]
+    return _pad_to_square(cropped, background)
+
+
+def downsample(grid: np.ndarray, size: int = 8) -> np.ndarray:
+    """Average a square uint8 grid down to (size, size), still 0-255."""
+    if grid.ndim != 2 or grid.shape[0] != grid.shape[1]:
+        raise ValueError("Expected a square 2D grid.")
+    # Catches a stray 0.0-1.0 float grid passed in by mistake.
+    if grid.dtype != np.uint8:
+        raise ValueError(f"Expected a uint8 grid, got {grid.dtype}.")
+    # Unequal boxes would silently skew the average; crop_and_center is
+    # responsible for giving us a multiple of the size.
+    side = grid.shape[0]
+    if side < size or side % size != 0:
+        raise ValueError(f"Side {side} must be a multiple of {size}, at least {size}.")
+
+    block = side // size
+    # Float first: uint8 wraps around (200 + 100 = 44), so summing thousands of
+    # pixels as uint8 gives garbage. The order is (box row, row inside box,
+    # box column, column inside box); (size, size, block, block) runs without
+    # error but scrambles which pixels belong to which box.
+    boxes = grid.astype(np.float32).reshape(size, block, size, block)
+    # Axes 1 and 3 are the "inside the box" directions, leaving one number per box.
+    averaged = boxes.mean(axis=(1, 3))
+    # Round to whole numbers, not truncate, so 99.9 becomes 100 and not 99.
+    return np.rint(averaged).astype(np.uint8)
