@@ -4,7 +4,13 @@
 
 When the router receives a post request, it validates the incoming image's (named `image`) magic bytes to make sure that it has a valid file type and also checks the file size to make sure that it doesn't exceed a size of 10MiB.
 
-`declared_mime` is based on what the client called the file and isn't necessarily trustworthy; `detected_mime` on the otherhand is and proved by an acutal file signature check. The`filename` can also be `null` because the clients doesn't need to send one.
+Accepted file types are PNG and JPEG only. PDF is planned, but is rejected for now because it needs first-page rasterization, which doesn't exist yet.
+
+`declared_mime` is based on what the client called the file and isn't necessarily trustworthy
+
+`detected_mime` on the otherhand is and proved by an actual file signature check. 
+
+The`filename` can also be `null` because the clients doesn't need to send one.
 
 
 
@@ -17,23 +23,28 @@ When the router receives a post request, it validates the incoming image's (name
     "filename": "digit.png",
     "declared_mime": "image/png",
     "detected_mime": "image/png",
-    "bytes": 108
+    "bytes": 108,
+    "width": 20,
+    "height": 10,
+    "format": "PNG"
   }
 }
 ```
+
+`width`, `height` and `format` come from fully decoding the image with Pillow, so they prove the file is a real, readable image and not just one with a valid signature. `format` is Pillow's name for it (`"PNG"` or `"JPEG"`).
 
 
 ### Errors
 
 Every error uses the same shape right now which is: `{"error": {"code", "message"}}`.
 
-**400 `INVALID_IMAGE`** if the file is empty or its bytes do not correlate to an accepted image type.
+**400 `INVALID_IMAGE`** if the file is empty, its bytes do not correlate to an accepted image type, or the image is truncated or corrupt and can't be fully decoded.
 
 ```json
 {
   "error": {
     "code": "INVALID_IMAGE",
-    "message": "File is not a PNG, JPEG, or PDF."
+    "message": "File is not a PNG or JPEG."
   }
 }
 ```
@@ -49,4 +60,15 @@ Every error uses the same shape right now which is: `{"error": {"code", "message
 }
 ```
 
-IIf a request comes without an `image` field, it is automatically rejected by FastAPI with error code 422.
+**413 `IMAGE_DIMENSIONS_TOO_LARGE`** error if the incoming image file has 50,000,000 pixels or more, seperate from `FILE_TOO_LARGE`: which only limits size from uploads, not from a compressed file.
+
+```json
+{
+  "error": {
+    "code": "IMAGE_DIMENSIONS_TOO_LARGE",
+    "message": "Image is 9000x6000; limit is 50000000 pixels."
+  }
+}
+```
+
+Finally, If an HTTP request doesn't have an `image` field, it gets auto-rejected with a 422 error.

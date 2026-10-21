@@ -5,6 +5,9 @@ export interface UploadInfo {
   declared_mime: string | null
   detected_mime: string
   bytes: number
+  width: number
+  height: number
+  format: string
 }
 
 export interface InferenceResponse {

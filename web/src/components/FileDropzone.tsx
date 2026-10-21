@@ -17,7 +17,7 @@ interface FileDropzoneProps {
  */
 function FileDropzone({
   onFileSelected,
-  accept = 'image/png,image/jpeg,application/pdf',
+  accept = 'image/png,image/jpeg',
   disabled = false,
 }: FileDropzoneProps) {
   const [isDragging, setIsDragging] = useState(false)

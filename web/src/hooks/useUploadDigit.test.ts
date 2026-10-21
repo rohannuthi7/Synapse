@@ -15,6 +15,9 @@ const result: InferenceResponse = {
     declared_mime: 'image/png',
     detected_mime: 'image/png',
     bytes: 108,
+    width: 20,
+    height: 10,
+    format: 'PNG',
   },
 }
 

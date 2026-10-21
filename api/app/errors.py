@@ -14,5 +14,12 @@ class FileTooLargeError(SynapseError):
     status_code = 413
 
 
+# Separate from FileTooLargeError: that limits bytes on the wire, this limits
+# the pixel count once unpacked, which a small compressed file can still blow up.
+class ImageDimensionsTooLargeError(SynapseError):
+    code = "IMAGE_DIMENSIONS_TOO_LARGE"
+    status_code = 413
+
+
 class InvalidImageError(SynapseError):
     code = "INVALID_IMAGE"
