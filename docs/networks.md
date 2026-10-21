@@ -9,6 +9,8 @@ We want to build an extremely quick portable neural network and explore its appl
 
 **Current plan:** We are going to design 2 different neural networks and compare their performance against one another.
 
+The Von Neumann path now in RTL scores one digit at a time. Each cell is an unsigned brightness, 0 through 255, multiplied by a signed 8-bit weight. The product is 16 bits. The sum of the 64 products is 22 bits, then sign-extended to a 32-bit integer for the UART result. The threshold-and-spike description below is the earlier plan.
+
 ## How the Networks Work
 
 The networks take input spikes corresponding to where brightness values fall below a certain threshold on the specific pixel. This triggers a spike to that pixel's neuron in the corresponding neural network. As a result, the neuron's weights activate and process the spikes to produce an output corresponding to the likelihood of the number that the weight map is meant for to have been in the photo. This is performed on all digits 0-9. The number with the greatest likelihood is selected to be the perceived number.

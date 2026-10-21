@@ -1,7 +1,7 @@
 Synapse
 =======
 
-Identify one digit, 0 through 9, from an n×n grid of light cells. Each cell turns light into a single bit. Each digit owns a weight for every cell. The digit with the largest weighted sum of the bits is the prediction.
+Identify one digit, 0 through 9, from an n×n grid of light cells. Each cell turns light into an unsigned brightness, 0 through 255. Each digit owns a signed weight for every cell. The digit with the largest sum of brightness times weight is the prediction.
 
 
 The cell
@@ -38,29 +38,29 @@ The comparator watches VL against a threshold VTH. Vo is a logic 1 when VL is ab
 Rh is a resistor from Vo back to the comparator's signal input, on the far side of a small series resistor Rser. The capacitor itself is a low impedance, so feedback tied directly across C does nothing useful. Rser gives the feedback a place to shift the effective threshold. When Vo is 1, the bar to fall back to 0 is a little lower than the bar that was required to become 1. The bit does not chatter when VL sits on the threshold.
 
 
-What the bit means
-------------------
+What the byte means
+-------------------
 
-A cell is not measuring how bright the ink is, past the threshold. Everything above VTH is 1. Everything below is 0. Gray becomes whichever side of the threshold it landed on.
+The value that enters the score is an unsigned byte, 0 through 255. It keeps how bright the cell is. A dark cell is 0. A fully bright cell is 255. A cell that is only partly covered lands between them and adds only that fraction of its weight.
 
-A correct 1 requires all of these at the sample moment:
+A faithful sample requires all of these at the sample moment:
 
-    the cell is actually lit
-    LDR has fallen enough that VL can exceed VTH
+    the cell has had time to settle
+    LDR has set VL for the light actually on that cell
     enough time has passed for C to follow VL
     Reset is open
 
-A correct 0 requires the complementary case: darkness, or light too weak to reach VTH, with C discharged from the previous frame. Ambient light that lifts every LDR partway will push dark cells over VTH and paint 1s where the digit has no stroke.
+Ambient light that lifts every LDR raises empty cells above 0 and adds weight where the digit has no stroke.
 
 
 The grid
 --------
 
-n by n of those bits, captured on the same frame, is the image. A practical discrete build is 5 by 5. That is 25 analog cells. 8 by 8 is 64 cells and is mostly wiring. The bits are read together after Reset has been released and C has had time to settle.
+n by n of those brightness bytes, captured on the same frame, is the image. A practical discrete build is 5 by 5. That is 25 analog cells. 8 by 8 is 64 cells and is mostly wiring. The bytes are read together after Reset has been released and C has had time to settle.
 
 The digit is supposed to fill the grid, stay centered, and be much brighter than an empty cell. The grid does not search a page for a digit. It classifies the one pattern already sitting on the cells.
 
-Number the cells in row-major order. A 5 by 5 frame is a vector x of 25 bits. x_i is 1 if cell i is lit.
+Number the cells in row-major order. An 8 by 8 frame is a vector x of 64 unsigned bytes. x_i is the brightness of cell i, from 0 through 255.
 
 
 The weights
@@ -72,23 +72,25 @@ Each digit d from 0 to 9 has a weight vector w_d with one weight per cell. The s
 
 The predicted digit is the d with the largest score. Ties are reported as ties, not silently awarded to the smaller index.
 
-Weights come from example frames, then they are frozen. A direct choice is the average bit vector of the examples of that digit, optionally shifted so a cell that is lit for every digit carries little weight. A cell that is lit only for an 8 should carry a large positive weight on the 8 and a small or negative weight on the digits that are dark there. Negative weights are allowed. They let a lit cell vote against a digit.
+On the FPGA, x_i is an unsigned 8-bit byte and w is a signed 8-bit byte. One product fits in signed 16 bits, because 255 * -128 = -32640. The sum of 64 products fits in signed 22 bits, because 64 * -32640 = -2088960. Each score is sign-extended into a 32-bit integer before it is sent. UART carries eight data bits per frame, so a 22-bit sum leaves as four bytes.
 
-The weights are not inside the analog cell. LDR is the sensor. The weight is a number applied after Vo exists. Mixing those two jobs, by trying to make the resistor both the light sensor and the digit weight, makes the threshold depend on which digit is being tested. The circuit senses first. The sum runs after the bits exist.
+Weights come from example frames, then they are frozen. They have to be trained on brightnesses from 0 through 255. A direct choice is the average brightness vector of the examples of that digit, optionally shifted so a cell that is bright for every digit carries little weight. A cell that is bright only for an 8 should carry a large positive weight on the 8 and a small or negative weight on the digits that are dark there. Negative weights are allowed. They let a bright cell vote against a digit.
 
-Worked on three cells, not a full grid. Suppose the bits are
+The weights are not inside the analog cell. LDR is the sensor. The weight is a number applied after the brightness byte exists. Mixing those two jobs, by trying to make the resistor both the light sensor and the digit weight, makes the reading depend on which digit is being tested. The circuit senses first. The multiply runs after the bytes exist.
 
-    x = [1, 0, 1]
+Worked on three cells, not a full grid. Suppose the brightnesses are
+
+    x = [200, 0, 50]
 
 and two digits own
 
     w_0 = [ 1,  1, -1 ]
     w_1 = [ 1, -1,  1 ]
 
-    score(0) = 1*1 + 0*1 + 1*(-1) = 0
-    score(1) = 1*1 + 0*(-1) + 1*1 = 2
+    score(0) = 200*1 + 0*1 + 50*(-1) = 150
+    score(1) = 200*1 + 0*(-1) + 50*1 = 250
 
-The prediction is 1. The middle cell is dark, so its weights never enter the sum. The third cell is lit, which counts for digit 1 and against digit 0.
+The prediction is 1. The middle cell is dark, so its weights add nothing. The third cell is partly bright, which counts for digit 1 and against digit 0.
 
 
 What a frame is
@@ -97,8 +99,8 @@ What a frame is
     1. Close Reset. Every capacitor is forced to ground. Every Vo that was high is released once VL falls through the hysteresis band.
     2. Open Reset. Light on each LDR starts charging that cell's C.
     3. Wait a fixed settle time, the same every frame.
-    4. Read all n×n comparator outputs into the bit vector x.
-    5. Compute the ten scores. Emit x and the winning digit.
+    4. Sample all n×n cells into the brightness vector x. Each entry is an unsigned byte.
+    5. Compute the ten scores. Send the 32-bit scores and the winning digit.
 
 The settle time is part of the design. Too short and a lit cell is still below VTH. Too long is harmless for this divider, because VL stops at the divider voltage rather than climbing forever. The time has to be long enough for the dimmest stroke that should still count as lit.
 
@@ -108,22 +110,22 @@ Where it works
 
 One digit, one font or one stroke style, centered, high contrast, grid size matched to the digit. Under those conditions the same cells light for the same digit, the scores separate, and the winner repeats.
 
-It fails when the lit cells move off the weights:
+It fails when the bright cells move off the weights:
 
     the digit is shifted by a cell
     the digit is larger or smaller than the examples
     the stroke is much thicker or thinner
     the digit is handwritten in a style the weights never saw
-    ambient light turns empty cells on
-    a threshold differs from cell to cell, so the same brightness is 1 on one cell and 0 on its neighbor
+    ambient light raises empty cells above 0
+    the weights were trained on lit-or-dark cells and then multiplied by a brightness up to 255
 
-A 5 by 5 binary picture is also a coarse image. An 8 and a 0 differ by a few middle cells. One flipped bit in that region can swap the winner. That is a property of the representation, not a tuning error.
+An 8 by 8 grid is still a coarse image. An 8 and a 0 differ by a few middle cells. One cell whose brightness is far from the examples can swap the winner. That is a property of the representation, not a tuning error.
 
 
 What is built
 -------------
 
-The analog grid, the reset line shared across cells, and the readout of the bits.
+The analog grid, the reset line shared across cells, and the readout of one unsigned brightness byte per cell.
 
 A fixed table of ten weight vectors.
 

@@ -1,12 +1,3 @@
-Food for Thought #1: Since xi is either 1’b0 or 1’b1, a dark cell adds no value. 
-Thus, using logic to compute multiplies and sums with it is pointless and takes additional space on the FPGA that could otherwise be avoided. 
-Software could keep only the lit cells and send the weights that correspond to those lit cells. 
-Since ‘1’ is implied, and 1 * a = a, having a pair {cell index, weight} would let it merely take weights into memory and load those. 
-Then, it would compute sums using a hierarchical adder system from L0-L5 (6 levels, just like now). 
-This would prevent the need for dedicated hardware to multiply units and division by 64. 
-Since dividing by 64 does not change the winner, since a/64 vs. b/64 … vs. j/64 is equivalent to a vs. b … vs. j, there’s no need for a hardware division unit. 
+Food for Thought #1: Each cell is an unsigned brightness, 0 through 255, multiplied by a signed 8-bit weight. A dark cell still adds nothing, because brightness 0 times a weight is 0. A partly bright cell adds part of the weight, so the product is a real multiply. Sending only the lit cells, or a pair {cell index, weight}, assumed every kept cell was 1. That assumption does not survive an 8-bit brightness.
 
-The L0-L5 tree does not shrink. It’s meant for 64 inputs, and theoretically 64 cells could be lit, so contracting that is counterintuitive and risky. 
-However, the hierarchical adder can work nonetheless by using hardwired ‘0’ for unused inputs. 
-The logic becomes shakier when having an odd number of lit cells, as it’s intended to handle an even 64 inputs in theory. 
-The sparse list is a real contraction, and the design is the whole dot product for a reason.
+The L0-L5 adder tree still has 64 inputs, one product per cell. Unused inputs are hardwired 0. Dividing the ten scores by 64 does not change the winner, so there is no division in the datapath. The weights stay on the FPGA after the first load, and each later picture is 64 brightness bytes. The design keeps the whole dot product.
