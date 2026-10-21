@@ -32,7 +32,7 @@ The line is 115200 baud, 8 data bits, no parity, 1 stop bit, least-significant b
 
 ## 8×8 datapath
 
-![Von Neumann 8×8 architecture. Software sends a frame and ten weight maps across UART. Each lit cell adds its weight, and an adder tree reduces those values to one score per digit.](8x8_arch_files_VN/VNarch_8x8.png)
+![Von Neumann 8×8 architecture. Software sends a frame and ten weight maps across UART. Each lit cell adds its weight, and an adder tree reduces those values to one score per digit.](hardware_schemas/VNarch_8x8.png)
 
 Software owns the frame and the weights. The frame is 64 bits, one per cell: 1 is lit, 0 is dark. Each digit has its own 64 weights, so memory holds 10 × 64 = 640 weights. A UART link is the bridge. The host writes the bits into an 8×8 register file and writes each digit's weights into `W0` through `W9`.
 
