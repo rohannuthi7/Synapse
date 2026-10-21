@@ -6,7 +6,14 @@ from PIL import Image, ImageDraw
 
 from app.errors import ImageDimensionsTooLargeError, InvalidImageError
 from app.services import preprocess
-from app.services.preprocess import decode, fix_orientation, flatten_alpha, to_grayscale
+from app.services.preprocess import (
+    decode,
+    fix_orientation,
+    flatten_alpha,
+    normalize_polarity,
+    otsu_threshold,
+    to_grayscale,
+)
 
 ORIENTATION = 0x0112
 
@@ -164,19 +171,21 @@ def test_input_is_not_modified() -> None:
     assert img.getpixel((0, 0)) == (0, 0, 0, 0)
 
 
-def test_white_image_is_all_ones() -> None:
-    assert (to_grayscale(Image.new("RGB", (4, 3), "white")) == 1.0).all()
+
+
+def test_white_image_is_all_255() -> None:
+    assert (to_grayscale(Image.new("RGB", (4, 3), "white")) == 255).all()
 
 
 def test_black_image_is_all_zeros() -> None:
-    assert (to_grayscale(Image.new("RGB", (4, 3), "black")) == 0.0).all()
+    assert (to_grayscale(Image.new("RGB", (4, 3), "black")) == 0).all()
 
 
 def test_brightness_is_weighted_not_averaged() -> None:
-    green = to_grayscale(Image.new("RGB", (1, 1), (0, 255, 0)))[0, 0]
-    blue = to_grayscale(Image.new("RGB", (1, 1), (0, 0, 255)))[0, 0]
-    assert np.isclose(green, 0.587, atol=0.01)
-    assert np.isclose(blue, 0.114, atol=0.01)
+    green = int(to_grayscale(Image.new("RGB", (1, 1), (0, 255, 0)))[0, 0])
+    blue = int(to_grayscale(Image.new("RGB", (1, 1), (0, 0, 255)))[0, 0])
+    assert abs(green - 150) <= 2  # 0.587 * 255
+    assert abs(blue - 29) <= 2  # 0.114 * 255
     assert green > blue * 4
 
 
@@ -184,24 +193,20 @@ def test_shape_is_height_then_width() -> None:
     assert to_grayscale(Image.new("RGB", (20, 10))).shape == (10, 20)
 
 
-def test_dtype_is_float32_within_unit_range() -> None:
-    grid = to_grayscale(Image.new("RGB", (4, 3), (10, 200, 90)))
-    assert grid.dtype == np.float32
-    assert grid.min() >= 0.0
-    assert grid.max() <= 1.0
+def test_grayscale_dtype_is_uint8() -> None:
+    assert to_grayscale(Image.new("RGB", (4, 3), (10, 200, 90))).dtype == np.uint8
 
 
 def test_position_is_preserved_as_row_then_column() -> None:
     img = Image.new("RGB", (20, 10), "white")
     img.putpixel((3, 7), (0, 0, 0))  # x=3, y=7
     grid = to_grayscale(img)
-    assert grid[7, 3] == 0.0
-    assert grid[3, 7] == 1.0
+    assert grid[7, 3] == 0
+    assert grid[3, 7] == 255
 
 
-def test_grayscale_input_is_scaled_to_unit_range() -> None:
-    grid = to_grayscale(Image.new("L", (2, 2), 51))
-    assert np.allclose(grid, 51 / 255)
+def test_grayscale_input_passes_through_unchanged() -> None:
+    assert (to_grayscale(Image.new("L", (2, 2), 51)) == 51).all()
 
 
 def test_to_grayscale_does_not_modify_input() -> None:
@@ -214,4 +219,148 @@ def test_to_grayscale_does_not_modify_input() -> None:
 def test_returned_grid_is_writable() -> None:
     grid = to_grayscale(Image.new("RGB", (2, 2), "white"))
     assert grid.flags.writeable
-    grid[0, 0] = 0.5
+    grid[0, 0] = 100
+
+
+# 10 tall x 20 wide, so mixing up rows and columns would fail.
+def make_grid(background: int, ink: int) -> np.ndarray:
+    grid = np.full((10, 20), background, dtype=np.uint8)
+    grid[3:7, 8:12] = ink
+    return grid
+
+
+def test_dark_digit_on_white_is_flipped() -> None:
+    result = normalize_polarity(make_grid(background=255, ink=0))
+    assert (result[3:7, 8:12] == 255).all()
+    assert result[0, 0] == 0
+
+
+def test_bright_digit_on_dark_is_unchanged() -> None:
+    grid = make_grid(background=0, ink=255)
+    assert np.array_equal(normalize_polarity(grid), grid)
+
+
+def test_polarity_keeps_shape_and_dtype() -> None:
+    for grid in (make_grid(255, 0), make_grid(0, 255)):
+        result = normalize_polarity(grid)
+        assert result.shape == (10, 20)
+        assert result.dtype == np.uint8
+
+
+def test_polarity_does_not_modify_input() -> None:
+    for grid in (make_grid(255, 0), make_grid(0, 255)):
+        before = grid.copy()
+        normalize_polarity(grid)
+        assert np.array_equal(grid, before)
+
+
+def test_unflipped_result_is_a_separate_array() -> None:
+    grid = make_grid(background=0, ink=255)
+    result = normalize_polarity(grid)
+    assert result is not grid
+    result[0, 0] = 230
+    assert grid[0, 0] == 0
+
+
+def test_median_beats_a_big_dark_mark_on_the_edge() -> None:
+    # Light gray paper (153) with the whole top row and the top of the left
+    # column dark: 25 of the 60 border values are 0, so the border mean is about
+    # 89 (would not flip) but the median is 153 (must flip).
+    grid = np.full((10, 20), 153, dtype=np.uint8)
+    grid[0, :] = 0
+    grid[:4, 0] = 0
+    assert np.array_equal(normalize_polarity(grid), 255 - grid)
+
+
+def test_border_just_below_cutoff_is_not_flipped() -> None:
+    grid = np.full((10, 20), 127, dtype=np.uint8)
+    assert np.array_equal(normalize_polarity(grid), grid)
+
+
+def test_border_just_above_cutoff_is_flipped() -> None:
+    grid = np.full((10, 20), 128, dtype=np.uint8)
+    assert np.array_equal(normalize_polarity(grid), 255 - grid)
+
+
+def two_clumps() -> np.ndarray:
+    grid = np.full((10, 20), 25, dtype=np.uint8)
+    grid[:, 10:] = 230
+    return grid
+
+
+def dim_ink() -> np.ndarray:
+    grid = np.full((10, 20), 25, dtype=np.uint8)
+    grid[3:7, 8:12] = 100
+    return grid
+
+
+def noisy_clumps(spread: float = 13) -> np.ndarray:
+    rng = np.random.default_rng(0)
+    is_ink = rng.random(10_000) < 0.15
+    values = np.where(
+        is_ink, rng.normal(204, spread, 10_000), rng.normal(38, spread, 10_000)
+    )
+    return np.rint(np.clip(values, 0, 255)).astype(np.uint8).reshape(100, 100)
+
+
+def test_two_clumps_cutoff_is_in_the_middle_of_the_gap() -> None:
+    # Plain argmax would land at 25; the tie handling must pick the middle.
+    cutoff = otsu_threshold(two_clumps())
+    assert 25 < cutoff < 230
+    assert abs(cutoff - 127.5) <= 13
+
+
+def test_dim_image_cutoff_is_below_a_fixed_127() -> None:
+    cutoff = otsu_threshold(dim_ink())
+    assert 25 < cutoff < 100
+    assert cutoff < 127  # a fixed 127 would have missed the ink
+
+
+def test_cutoff_separates_ink_from_paper() -> None:
+    for grid in (two_clumps(), dim_ink()):
+        bright = grid > grid.min()
+        assert np.array_equal(grid > otsu_threshold(grid), bright)
+
+
+def test_noisy_clumps_cutoff_lands_between_them() -> None:
+    assert 77 < otsu_threshold(noisy_clumps()) < 166
+
+
+def test_tiny_ink_group_is_still_found() -> None:
+    grid = np.full((100, 100), 25, dtype=np.uint8)
+    grid[:4, :4] = 230  # 16 pixels
+    assert 25 < otsu_threshold(grid) < 230
+
+
+@pytest.mark.parametrize("value", [77, 0, 255])
+def test_constant_grid_has_no_ink(value: int) -> None:
+    grid = np.full((10, 20), value, dtype=np.uint8)
+    cutoff = otsu_threshold(grid)
+    assert isinstance(cutoff, float)
+    assert not (grid > cutoff).any()
+
+
+def test_empty_grid_raises() -> None:
+    with pytest.raises(ValueError):
+        otsu_threshold(np.empty((0, 0), dtype=np.uint8))
+
+
+def test_float_grid_raises() -> None:
+    with pytest.raises(ValueError):
+        otsu_threshold(np.full((10, 20), 0.5, dtype=np.float32))
+
+
+def test_otsu_does_not_modify_input_and_returns_float() -> None:
+    grid = dim_ink()
+    before = grid.copy()
+    cutoff = otsu_threshold(grid)
+    assert np.array_equal(grid, before)
+    assert isinstance(cutoff, float)
+
+
+def test_cutoff_matches_scikit_image() -> None:
+    filters = pytest.importorskip("skimage.filters")
+    # Wide spread so the clumps overlap: with an empty gap between them scikit-image
+    # takes the first tied cutoff and we take the middle, by design.
+    grid = noisy_clumps(spread=30)
+    assert abs(otsu_threshold(grid) - filters.threshold_otsu(grid)) <= 3
