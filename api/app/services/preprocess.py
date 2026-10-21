@@ -1,6 +1,7 @@
 import io
+import struct
 
-from PIL import Image, UnidentifiedImageError
+from PIL import Image, ImageOps, UnidentifiedImageError
 
 from app.errors import ImageDimensionsTooLargeError, InvalidImageError
 
@@ -39,3 +40,17 @@ def decode(data: bytes) -> Image.Image:
 
     # Mode is left as-is (RGB/RGBA/L/P); later steps normalize it.
     return img
+
+
+def fix_orientation(img: Image.Image) -> Image.Image:
+    """Apply the EXIF Orientation tag to the pixels and drop the tag."""
+    try:
+        # Rotates/flips the real pixels and removes the tag so a later step
+        # can't rotate the image a second time. A no-op copy if there is no tag.
+        fixed = ImageOps.exif_transpose(img)
+    except (SyntaxError, ValueError, struct.error):
+        # Orientation is metadata; a broken tag shouldn't reject an otherwise
+        # valid image.
+        return img
+    # Only None when in_place=True, but the stubs type it as optional.
+    return fixed if fixed is not None else img
