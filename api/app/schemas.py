@@ -15,6 +15,10 @@ class UploadInfo(BaseModel):
     declared_mime: str | None
     detected_mime: str
     bytes: int
+    width: int
+    height: int
+    # Pillow's format name, e.g. "PNG" or "JPEG".
+    format: str
 
 
 class InferenceResponse(BaseModel):
