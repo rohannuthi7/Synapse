@@ -1,6 +1,7 @@
 import io
 import struct
 
+import numpy as np
 from PIL import Image, ImageOps, UnidentifiedImageError
 
 from app.errors import ImageDimensionsTooLargeError, InvalidImageError
@@ -54,3 +55,37 @@ def fix_orientation(img: Image.Image) -> Image.Image:
         return img
     # Only None when in_place=True, but the stubs type it as optional.
     return fixed if fixed is not None else img
+
+
+def flatten_alpha(img: Image.Image) -> Image.Image:
+    """Lay the image on white so transparent areas become white; return RGB."""
+    # Palette (and some other) modes keep transparency in metadata rather than
+    # in an alpha band, so the mode alone would miss them.
+    has_transparency = img.mode in ("RGBA", "LA", "PA") or "transparency" in img.info
+    if not has_transparency:
+        return img.convert("RGB")
+
+    # RGBA turns every transparent mode into one code path.
+    rgba = img.convert("RGBA")
+    background = Image.new("RGB", rgba.size, (255, 255, 255))
+    # Only the alpha band is the mask: it says how much of each pixel to keep.
+    # Passing the whole RGBA image would be read as a color mask, not opacity.
+    background.paste(rgba, mask=rgba.getchannel("A"))
+    return background
+
+
+def to_grayscale(img: Image.Image) -> np.ndarray:
+    """Return a (height, width) float32 grid, 0.0 black to 1.0 white.
+
+    The image must already be flattened: convert("L") silently drops alpha,
+    which is the bug flatten_alpha exists to prevent.
+    """
+    # Weighted luminance (0.299R + 0.587G + 0.114B) rather than a plain average,
+    # because the eye sees green as brighter than blue.
+    gray = img.convert("L")
+
+    # float32 avoids uint8 wraparound (200 + 100 would give 44) when later steps
+    # add pixels, and 0-1 makes invert (1.0 - grid) trivial. astype copies, so
+    # we own a writable array instead of a read-only view of Pillow's memory.
+    # NumPy is rows first, (height, width): the opposite of Pillow's img.size.
+    return np.asarray(gray).astype(np.float32) / 255.0
