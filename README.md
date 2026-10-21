@@ -10,9 +10,9 @@ The sensing happens in a small analog circuit on each cell. The multiply and the
 
 ## 8×8 datapath
 
-![Von Neumann 8×8 architecture. Software sends a frame and ten weight maps across UART. Each cell's brightness is multiplied by its weight, and an adder tree reduces those products to one score per digit.](hardware_schemas/VNarch_8x8.png)
+![Von Neumann 8×8 architecture. The register file stores an unsigned brightness, 0 through 255, for each cell. Ten weight maps feed the multipliers, and an adder tree reduces the products to one score per digit.](hardware_schemas/VNarch_8x8.png)
 
-Software owns the frame and the weights. The frame is 64 unsigned bytes, one brightness per cell. Each digit has its own 64 weights, so memory holds 10 × 64 = 640 weights. A UART link is the bridge. The host writes the brightnesses into an 8×8 register file and writes each digit's weights into `W0` through `W9`.
+Software owns the frame and the weights. The figure's register file is that frame: 64 unsigned bytes, one brightness per cell, 0 through 255. Each digit has its own 64 weights, so memory holds 10 × 64 = 640 weights. A UART link is the bridge. The host writes the brightnesses into an 8×8 register file and writes each digit's weights into `W0` through `W9`.
 
 `score.sv` computes `x[i] * w[i]` for one digit. The 64 products then fold down an adder tree:
 
