@@ -1,51 +1,86 @@
 module uart_rx #(
-    // needs clks per bit
-)   (
-    // set inputs and outputs here
-    // clk, rst, rx pin in
-    // data byte out, valid pulse out
-
+    parameter int CLKS_PER_BIT = 434
+) (
+    input  var logic       clk,
+    input  var logic       rst,
+    input  var logic       rx,
+    output logic [7:0]     data,
+    output logic           valid
 );
+    typedef enum logic [1:0] {
+        S_IDLE,
+        S_START,
+        S_DATA,
+        S_STOP
+    } state_t;
 
-    // need logic for UART state machine
+    state_t     state;
+    logic [8:0] clk_count;
+    logic [2:0] bit_idx;
+    logic [7:0] shift;
 
-    // need to declare state, clk count, bit index, and shift
-
-    // always_ff declarations
-
-
-    /*
-     * if rst
-     * 1. state becomes idle
-     * 2. valid becomes 0
-     * 3. data becomes 0
-     * 4. clk count becomes 0
-     * 5. bit idx becomes 0
-     * 6. shift becomes 0
-     */
-
-    /* need 4 cases
-     * one for S_IDLE
-     *   wait while rx is high
-     *   a falling edge is the start bit
-     *   clk count and bit idx go to 0
-     *   state becomes S_START
-     * one for S_START
-     *   count to the middle of the start bit, CLKS_PER_BIT / 2
-     *   if rx is still low, state becomes S_DATA and clk count goes to 0
-     *   if rx is high, it was a glitch, state becomes S_IDLE
-     * one for S_DATA
-     *   count CLKS_PER_BIT clocks to the middle of the next bit
-     *   shift the rx level in, least significant bit first
-     *   after 8 bits, state becomes S_STOP
-     * one for S_STOP
-     *   count CLKS_PER_BIT clocks to the middle of the stop bit
-     *   if rx is high, data becomes shift and valid pulses 1
-     *   state becomes S_IDLE
-     */
-
-    // declare default state as IDLE
-
-    // end
+    always_ff @(posedge clk) begin
+        if (rst) begin
+            state     <= S_IDLE; // go to IDLE when reset 
+            valid     <= 1'b0;
+            data      <= '0; 
+            clk_count <= '0;
+            bit_idx   <= '0;
+            shift     <= '0;
+        end else begin
+            valid <= 1'b0;
+            case (state)
+                S_IDLE: begin
+                    clk_count <= '0;
+                    bit_idx   <= '0;
+                    if (!rx) begin
+                        state <= S_START;
+                    end else begin
+                        state <= S_IDLE;
+                    end
+                end
+                S_START: begin
+                    if (clk_count == CLKS_PER_BIT / 2 - 1) begin
+                        clk_count <= '0;
+                        if (!rx)
+                            state <= S_DATA;
+                        else
+                            state <= S_IDLE;
+                    end else begin
+                        clk_count <= clk_count + 1'b1;
+                    end
+                end
+                S_DATA: begin
+                    if (clk_count == CLKS_PER_BIT - 1) begin
+                        clk_count      <= '0;
+                        shift[bit_idx] <= rx; 
+                        if (bit_idx == 3'd7) begin
+                            bit_idx <= '0;
+                            state   <= S_STOP;
+                        end else begin
+                            bit_idx <= bit_idx + 1'b1;
+                        end
+                    end else begin
+                        clk_count <= clk_count + 1'b1;
+                    end
+                end
+                S_STOP: begin
+                    if (clk_count == CLKS_PER_BIT - 1) begin
+                        clk_count <= '0;
+                        if (rx) begin
+                            data  <= shift;
+                            valid <= 1'b1;
+                        end
+                        state <= S_IDLE;
+                    end else begin
+                        clk_count <= clk_count + 1'b1;
+                    end
+                end
+                default: begin
+                    state <= S_IDLE;
+                end
+            endcase
+        end
+    end
 
 endmodule

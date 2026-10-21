@@ -1,11 +1,16 @@
-# vsim -c uart_tx_tb -do "run -all; quit -f" 
-# Start time: 03:40:19 on Oct 19,2026
+# vsim -c score_tb -do "run -all; quit -f" 
+# Start time: 05:30:37 on Oct 21,2026
 # Loading sv_std.std
-# Loading work.uart_tx_tb
-# Loading work.uart_tx
+# Loading work.score_tb
+# Loading work.score
 # run -all
-# uart_tx: 0x55 0xA5 0x00 0xFF matched, 434 clocks per bit
-# ** Note: $finish    : tb/uart_tx_tb.sv(88)
-#    Time: 347451 ns  Iteration: 0  Instance: /uart_tx_tb
-# End time: 03:40:19 on Oct 19,2026, Elapsed time: 0:00:00
+# all dark: 0
+# all bright, weight -128: -2088960
+# one cell 255 * 127: 32385
+# one cell 1 * -1: -1
+# mixed signs: -1921
+# score: brightness multiply matched
+# ** Note: $finish    : rtl/tb/score_tb.sv(61)
+#    Time: 5 ps  Iteration: 0  Instance: /score_tb
+# End time: 05:30:38 on Oct 21,2026, Elapsed time: 0:00:01
 # Errors: 0, Warnings: 0

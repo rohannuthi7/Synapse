@@ -31,20 +31,33 @@ Checksum, size = 1, XOR of every preceding byte
 
 Host-to-Board Communications: 
 Opcode = 0x01, 'PING', empty payload, reply = ACK
-Opcode = 0x02, 'FRAME', 8 bytes/8x8 image, reply = ACK
+Opcode = 0x02, 'FRAME', 64 bytes/8x8 image, reply = ACK
 Opcode = 0x03, 'WEIGHTS', 65 bytes payload, reply = 'ACK'
 Opcoed = 0x04, 'RUN', empty payload, reply = 'RESULT'
 
 A bad packet is answered with the 'NACK' signal
 
-Frame is an 8x8 grid of cells. '0' implies LOW, '1' implies HIGH. Can be either 8'b0 or 8'b1, communicated from software --> hardware.
+Frame is an 8x8 grid of cells. Each cell is one unsigned byte, 0 through 255, sent software --> hardware. Cell 0 is byte 0.
 
-Weights are digits 0-9, with corresponding weights for each digit for each of the 64 cells. Thus, one digit (e.g. 0) has 64 * 1 byte of data for the weights.
+Weights are digits 0-9. Each weight is a signed byte, -128 through 127. One digit has 64 weight bytes. Ten digits have 640 weight bytes.
+
+Score widths, per digit:
+x is unsigned 8-bit
+w is signed 8-bit
+one product is signed 16-bit (255 * -128 = -32640)
+the sum of 64 products is signed 22-bit (64 * -32640 = -2088960)
+
+A UART frame is start + 8 data bits + stop. A 22-bit sum does not travel as start + 22 + stop. It is sign-extended into a little-endian int32, four bytes, and each of those bytes has its own start and stop.
+
+Byte time is 10 * 8.68 us = 86.8 us.
+FRAME payload, 64 bytes: 5.56 ms. FRAME packet, 68 bytes: 5.9 ms.
+WEIGHTS, 10 packets of 69 bytes: 59.9 ms.
+RESULT packet, 46 bytes: 4.0 ms. The 42-byte payload is 10 int32 scores, the winning digit, and flags. The other 4 bytes are sync, opcode, length, and checksum.
 
 Board-to-Host Communications:
 Opcode = 0x81, 'PONG', 1 byte payload
 Opcode = 0x82, 'ACK', 1 byte payload
-Opcode = 0x83, 'RESULT', 22 byte payload
+Opcode = 0x83, 'RESULT', 42 byte payload (10 little-endian int32 scores, winning digit, flags)
 Opcode = 0x84, 'NACK', 1 byte payloaod 
 
 Reasons for a 'NACK' signal 
