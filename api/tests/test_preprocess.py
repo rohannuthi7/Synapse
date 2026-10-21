@@ -4,10 +4,16 @@ import numpy as np
 import pytest
 from PIL import Image, ImageDraw
 
-from app.errors import ImageDimensionsTooLargeError, InvalidImageError
+from app.errors import (
+    ImageDimensionsTooLargeError,
+    InvalidImageError,
+    NoDigitFoundError,
+)
 from app.services import preprocess
 from app.services.preprocess import (
+    crop_and_center,
     decode,
+    downsample,
     fix_orientation,
     flatten_alpha,
     normalize_polarity,
@@ -364,3 +370,264 @@ def test_cutoff_matches_scikit_image() -> None:
     # takes the first tied cutoff and we take the middle, by design.
     grid = noisy_clumps(spread=30)
     assert abs(otsu_threshold(grid) - filters.threshold_otsu(grid)) <= 3
+
+
+def grid_with_block(
+    shape: tuple[int, int],
+    top: int,
+    left: int,
+    height: int,
+    width: int,
+    paper: int = 20,
+    ink: int = 200,
+) -> np.ndarray:
+    grid = np.full(shape, paper, dtype=np.uint8)
+    grid[top : top + height, left : left + width] = ink
+    return grid
+
+
+def basic_digit() -> np.ndarray:
+    return grid_with_block((300, 400), top=100, left=150, height=60, width=40)
+
+
+def test_crop_and_center_basic_shape_and_position() -> None:
+    result = crop_and_center(basic_digit())
+    assert result.shape == (72, 72)
+    assert (result[6:66, 16:56] == 200).all()
+    assert result[0, 0] == 20
+    assert result[-1, -1] == 20
+
+
+def test_crop_keeps_every_ink_pixel() -> None:
+    assert (crop_and_center(basic_digit()) == 200).sum() == 60 * 40
+
+
+def test_padding_matches_the_paper() -> None:
+    result = crop_and_center(grid_with_block((300, 400), 100, 150, 60, 40, paper=33))
+    assert {result[0, 0], result[0, -1], result[-1, 0], result[-1, -1]} == {33}
+
+
+def test_tall_thin_digit_is_centered_horizontally() -> None:
+    result = crop_and_center(grid_with_block((300, 400), 100, 150, 100, 10))
+    assert result.shape == (120, 120)
+    cols = np.where((result == 200).any(axis=0))[0]
+    left_pad, right_pad = cols[0], result.shape[1] - 1 - cols[-1]
+    assert abs(left_pad - right_pad) <= 1
+
+
+def test_wide_block_is_centered_vertically() -> None:
+    result = crop_and_center(grid_with_block((300, 400), 100, 150, 10, 100))
+    assert result.shape == (120, 120)
+    rows = np.where((result == 200).any(axis=1))[0]
+    top_pad, bottom_pad = rows[0], result.shape[0] - 1 - rows[-1]
+    assert abs(top_pad - bottom_pad) <= 1
+
+
+def test_odd_padding_is_still_square() -> None:
+    # margin is ceil(6.1) = 7, side 75, rounded up to 80.
+    result = crop_and_center(grid_with_block((300, 400), 100, 150, 61, 40))
+    assert result.shape == (80, 80)
+    assert (result == 200).sum() == 61 * 40
+
+
+@pytest.mark.parametrize("size", [(3, 3), (5, 17), (30, 30), (77, 13)])
+def test_result_is_always_a_valid_square(size: tuple[int, int]) -> None:
+    result = crop_and_center(grid_with_block((300, 400), 100, 150, *size))
+    assert result.ndim == 2
+    assert result.shape[0] == result.shape[1]
+    assert result.dtype == np.uint8
+    assert result.shape[0] % 8 == 0
+    assert result.shape[0] >= 8
+
+
+def test_dust_speck_is_ignored() -> None:
+    clean = basic_digit()
+    specked = clean.copy()
+    specked[5, 380] = 255  # one ink pixel: its row and column don't count
+    assert np.array_equal(crop_and_center(specked), crop_and_center(clean))
+
+
+def test_dim_digit_still_works() -> None:
+    result = crop_and_center(grid_with_block((300, 400), 100, 150, 60, 40, ink=100))
+    assert (result == 100).sum() == 60 * 40
+
+
+def test_too_faint_digit_is_rejected() -> None:
+    with pytest.raises(NoDigitFoundError):
+        crop_and_center(grid_with_block((300, 400), 100, 150, 60, 40, ink=60))
+
+
+@pytest.mark.parametrize("value", [0, 128, 255])
+def test_blank_grid_is_rejected(value: int) -> None:
+    with pytest.raises(NoDigitFoundError):
+        crop_and_center(np.full((50, 60), value, dtype=np.uint8))
+
+
+def test_noise_only_grid_is_rejected() -> None:
+    rng = np.random.default_rng(0)
+    noise = np.clip(rng.normal(100, 5, (100, 100)), 0, 255).astype(np.uint8)
+    with pytest.raises(NoDigitFoundError):
+        crop_and_center(noise)
+
+
+def test_digit_touching_the_border_works() -> None:
+    result = crop_and_center(grid_with_block((300, 400), 0, 0, 60, 40))
+    assert result.shape == (72, 72)
+    assert (result == 200).sum() == 60 * 40
+
+
+def test_non_square_input_works() -> None:
+    result = crop_and_center(grid_with_block((120, 300), 30, 100, 50, 30))
+    assert result.shape[0] == result.shape[1]
+    assert (result == 200).sum() == 50 * 30
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        np.full((10, 20), 0.5, dtype=np.float32),
+        np.zeros((4, 4, 3), dtype=np.uint8),
+        np.empty((0, 0), dtype=np.uint8),
+    ],
+    ids=["float32", "3d", "empty"],
+)
+def test_crop_rejects_wrong_inputs(bad: np.ndarray) -> None:
+    with pytest.raises(ValueError):
+        crop_and_center(bad)
+
+
+def test_crop_does_not_modify_input_or_share_memory() -> None:
+    grid = basic_digit()
+    before = grid.copy()
+    result = crop_and_center(grid)
+    assert np.array_equal(grid, before)
+    assert not np.shares_memory(grid, result)
+
+
+def test_no_digit_found_error_attributes() -> None:
+    err = NoDigitFoundError()
+    assert err.status_code == 400
+    assert err.code == "NO_DIGIT_FOUND"
+    assert err.message
+
+
+def test_downsample_flat_grid() -> None:
+    result = downsample(np.full((16, 16), 100, dtype=np.uint8))
+    assert (result == 100).all()
+
+
+def test_downsample_left_right_split() -> None:
+    grid = np.zeros((16, 16), dtype=np.uint8)
+    grid[:, 8:] = 200
+    result = downsample(grid)
+    assert (result[:, :4] == 0).all()
+    assert (result[:, 4:] == 200).all()
+
+
+def test_downsample_top_bottom_split() -> None:
+    grid = np.zeros((16, 16), dtype=np.uint8)
+    grid[8:, :] = 200
+    result = downsample(grid)
+    assert (result[:4, :] == 0).all()
+    assert (result[4:, :] == 200).all()
+
+
+def test_downsample_block_lands_in_the_right_cell() -> None:
+    top_left = np.zeros((16, 16), dtype=np.uint8)
+    top_left[0:2, 0:2] = 255
+    result = downsample(top_left)
+    assert result[0, 0] == 255
+    assert result.sum() == 255
+
+    top_right = np.zeros((16, 16), dtype=np.uint8)
+    top_right[0:2, 14:16] = 255
+    result = downsample(top_right)
+    assert result[0, 7] == 255
+    assert result.sum() == 255
+
+
+def test_downsample_partial_coverage_gives_in_between_shade() -> None:
+    grid = np.zeros((16, 16), dtype=np.uint8)
+    grid[:, 1::2] = 200  # each 2x2 box: two pixels of 0, two of 200
+    assert (downsample(grid) == 100).all()
+
+
+def test_downsample_rounds_to_nearest_not_down() -> None:
+    # An exact .5 average goes to 100 (np.rint rounds half to even), which
+    # truncation would also give, so the second case uses 101.75 to tell them
+    # apart: rounding gives 102, truncating gives 101.
+    grid = np.full((16, 16), 100, dtype=np.uint8)
+    grid[0, 0:2] = 101  # box (0, 0): (101 + 101 + 100 + 100) / 4 = 100.5
+    assert downsample(grid)[0, 0] == 100
+    grid[0:2, 0:2] = 102
+    grid[1, 1] = 101  # (102 * 3 + 101) / 4 = 101.75
+    assert downsample(grid)[0, 0] == 102
+
+
+@pytest.mark.parametrize("value", [250, 255])
+def test_downsample_does_not_wrap_around(value: int) -> None:
+    assert (downsample(np.full((64, 64), value, dtype=np.uint8)) == value).all()
+
+
+def test_downsample_larger_grid_lights_exactly_one_cell() -> None:
+    grid = np.zeros((720, 720), dtype=np.uint8)
+    grid[90:180, 270:360] = 255  # exactly box (1, 3)
+    result = downsample(grid)
+    assert result[1, 3] == 255
+    assert result.sum() == 255
+
+
+def test_downsample_shape_and_dtype() -> None:
+    grid = np.zeros((16, 16), dtype=np.uint8)
+    result = downsample(grid)
+    assert result.shape == (8, 8)
+    assert result.dtype == np.uint8
+    assert downsample(grid, size=4).shape == (4, 4)
+
+
+def test_downsample_does_not_modify_input_or_share_memory() -> None:
+    grid = np.random.default_rng(0).integers(0, 256, (16, 16), dtype=np.uint8)
+    before = grid.copy()
+    result = downsample(grid)
+    assert np.array_equal(grid, before)
+    assert not np.shares_memory(grid, result)
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        np.zeros((16, 24), dtype=np.uint8),
+        np.zeros((16, 16), dtype=np.float32),
+        np.zeros((20, 20), dtype=np.uint8),
+        np.zeros((4, 4), dtype=np.uint8),
+        np.zeros((16, 16, 3), dtype=np.uint8),
+    ],
+    ids=["non-square", "float32", "not-multiple", "too-small", "3d"],
+)
+def test_downsample_rejects_bad_input(bad: np.ndarray) -> None:
+    with pytest.raises(ValueError):
+        downsample(bad)
+
+
+def test_downsample_matches_pillow_box_filter() -> None:
+    grid = np.random.default_rng(0).integers(0, 256, (64, 64), dtype=np.uint8)
+    pillow = np.asarray(Image.fromarray(grid).resize((8, 8), Image.Resampling.BOX))
+    diff = downsample(grid).astype(np.int16) - pillow.astype(np.int16)
+    assert np.abs(diff).max() <= 1
+
+
+def test_pipeline_end_to_end_on_a_thick_L() -> None:
+    img = Image.new("RGB", (300, 300), "white")
+    draw = ImageDraw.Draw(img)
+    draw.rectangle((100, 60, 130, 240), fill="black")  # vertical stroke
+    draw.rectangle((100, 210, 220, 240), fill="black")  # foot of the L
+
+    grid = downsample(
+        crop_and_center(normalize_polarity(to_grayscale(flatten_alpha(img))))
+    )
+    assert grid.shape == (8, 8)
+    assert grid.dtype == np.uint8
+    # The stroke fills column 2 (column 1 only grazes its edge); the top-right
+    # corner is empty paper.
+    assert grid[1:6, 2].min() > 200
+    assert grid[0:3, 5:8].max() < 20
