@@ -184,3 +184,28 @@ R17
 !i113 1
 o-sv
 R5
+vweights
+R1
+!s110 1792671643
+!i10b 1
+!s100 P0oSHDzfmQ5C`RUDaQhok1
+R2
+IE@lVa6eER00X2G9R=FHSg3
+R3
+S1
+R0
+w1792671640
+8c:\synapse\Synapse\rtl\weights.sv
+Fc:\synapse\Synapse\rtl\weights.sv
+!i122 8
+L0 1 29
+R4
+r1
+!s85 0
+31
+!s108 1792671643.000000
+!s107 c:\synapse\Synapse\rtl\weights.sv|
+!s90 -sv|c:\synapse\Synapse\rtl\weights.sv|
+!i113 1
+o-sv
+R5
