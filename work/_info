@@ -9,14 +9,39 @@ z2
 !i10f 100
 cModel Technology
 Z0 dC:/synapse/Synapse
-vscore
+vpacket
 Z1 DXx6 sv_std 3 std 0 22 VYECXdT12H8WgbUP_5Y6:3
-Z2 !s110 1792578637
+!s110 1792669098
+!i10b 1
+!s100 6;gET5_<S@>BCgDm_KlA20
+Z2 !s11b Dg1SIo80bB@j0V0VzS_@n1
+IfJe7[>ce^mVC>P;MhJhQY0
+Z3 VDg1SIo80bB@j0V0VzS_@n1
+S1
+R0
+w1792669093
+8c:\synapse\Synapse\rtl\packet.sv
+Fc:\synapse\Synapse\rtl\packet.sv
+!i122 7
+L0 6 96
+Z4 OV;L;2020.1;71
+r1
+!s85 0
+31
+!s108 1792669098.000000
+!s107 c:\synapse\Synapse\rtl\packet.sv|
+!s90 -sv|c:\synapse\Synapse\rtl\packet.sv|
+!i113 1
+o-sv
+Z5 tCvgOpt 0
+vscore
+R1
+Z6 !s110 1792578637
 !i10b 1
 !s100 n:T2d8NJ72OCP`FIM`Pc61
-Z3 !s11b Dg1SIo80bB@j0V0VzS_@n1
+R2
 Icz3N[E9T[UoW2Sz8=DXV=0
-Z4 VDg1SIo80bB@j0V0VzS_@n1
+R3
 S1
 R0
 w1792578633
@@ -24,24 +49,24 @@ w1792578633
 Frtl/score.sv
 !i122 6
 L0 1 15
-Z5 OV;L;2020.1;71
+R4
 r1
 !s85 0
 31
-Z6 !s108 1792578637.000000
-!s107 rtl/tb/score_tb.sv|rtl/score.sv|
-Z7 !s90 -sv|rtl/score.sv|rtl/tb/score_tb.sv|
+Z7 !s108 1792578637.000000
+Z8 !s107 rtl/tb/score_tb.sv|rtl/score.sv|
+Z9 !s90 -sv|rtl/score.sv|rtl/tb/score_tb.sv|
 !i113 1
 o-sv
-Z8 tCvgOpt 0
+R5
 vscore_tb
 R1
-R2
+R6
 !i10b 1
 !s100 lW5_ENUUMKY4SLSLZEM;K0
-R3
+R2
 IF7WNVjmmo=PP>6d]m0D>m3
-R4
+R3
 S1
 R0
 w1792578348
@@ -49,24 +74,24 @@ w1792578348
 Frtl/tb/score_tb.sv
 !i122 6
 L0 1 63
-R5
+R4
 r1
 !s85 0
 31
-R6
-Z9 !s107 rtl/tb/score_tb.sv|rtl/score.sv|
 R7
+R8
+R9
 !i113 1
 o-sv
-R8
+R5
 vuart_rx
 R1
 Z10 !s110 1792571696
 !i10b 1
 !s100 j^zTg]HHoIISYKO;i3PzV1
-R3
+R2
 I[G@ONm_TM`Ojo@Fba>EHo2
-R4
+R3
 S1
 R0
 w1792571590
@@ -74,7 +99,7 @@ w1792571590
 Frtl/uart_rx.sv
 !i122 3
 L0 1 86
-R5
+R4
 r1
 !s85 0
 31
@@ -83,15 +108,15 @@ Z12 !s107 tb/uart_rx_tb.sv|rtl/uart_rx.sv|
 Z13 !s90 -sv|rtl/uart_rx.sv|tb/uart_rx_tb.sv|
 !i113 1
 o-sv
-R8
+R5
 vuart_rx_tb
 R1
 R10
 !i10b 1
 !s100 9ePHGAeaQLTGjc:H9aL=20
-R3
+R2
 IHNUYSz@>SBYb=V<9B5XB_1
-R4
+R3
 S1
 R0
 w1792571691
@@ -99,7 +124,7 @@ w1792571691
 Ftb/uart_rx_tb.sv
 !i122 3
 L0 3 67
-R5
+R4
 r1
 !s85 0
 31
@@ -108,15 +133,15 @@ R12
 R13
 !i113 1
 o-sv
-R8
+R5
 vuart_tx
 R1
 Z14 !s110 1792399218
 !i10b 1
 !s100 FRk9bjDCQHjIEROHM6VSh1
-R3
+R2
 I>PzWiSFRR0ZD=Xmg_WWn:1
-R4
+R3
 S1
 R0
 w1792399152
@@ -124,7 +149,7 @@ w1792399152
 Frtl/uart_tx.sv
 !i122 1
 L0 1 85
-R5
+R4
 r1
 !s85 0
 31
@@ -133,15 +158,15 @@ Z16 !s107 tb/uart_tx_tb.sv|rtl/uart_tx.sv|
 Z17 !s90 -sv|rtl/uart_tx.sv|tb/uart_tx_tb.sv|
 !i113 1
 o-sv
-R8
+R5
 vuart_tx_tb
 R1
 R14
 !i10b 1
 !s100 B0P8g6nN;4dA^[gP;K_W32
-R3
+R2
 IBY]>6V5B5<8=gloZ;2_OB0
-R4
+R3
 S1
 R0
 w1792399198
@@ -149,7 +174,7 @@ w1792399198
 Ftb/uart_tx_tb.sv
 !i122 1
 L0 3 88
-R5
+R4
 r1
 !s85 0
 31
@@ -158,4 +183,4 @@ R16
 R17
 !i113 1
 o-sv
-R8
+R5
