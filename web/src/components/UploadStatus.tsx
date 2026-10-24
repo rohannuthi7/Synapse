@@ -22,7 +22,7 @@ function describe(state: UploadState): { title: string; body: string } {
       const { format, width, height, bytes } = state.result.upload
       return {
         title: 'Upload accepted',
-        body: `${format}, ${width} × ${height} px, ${bytes.toLocaleString('en-US')} bytes. The backend received, validated and decoded the file.`,
+        body: `${format}, ${width} × ${height} px, ${bytes.toLocaleString('en-US')} bytes. The 8×8 brightness frame is ready.`,
       }
     }
     case 'rejected': {
@@ -46,10 +46,22 @@ function describe(state: UploadState): { title: string; body: string } {
 /** The readout's status line; a polite live region so each change is announced. */
 function UploadStatus({ state }: UploadStatusProps) {
   const { title, body } = describe(state)
+  const cells = state.status === 'done' && Array.isArray(state.result.cells) ? state.result.cells : []
   return (
     <div role="status" aria-live="polite">
       <p className={styles.title}>{title}</p>
       <p className={styles.body}>{body}</p>
+      {cells.length === 64 && (
+        <div className={styles.grid} role="img" aria-label="8 by 8 brightness">
+          {cells.map((value, index) => (
+            <span
+              key={index}
+              className={styles.cell}
+              style={{ background: `rgb(${value} ${value} ${value})` }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

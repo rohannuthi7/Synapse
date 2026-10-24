@@ -13,6 +13,8 @@ export interface UploadInfo {
 export interface InferenceResponse {
   id: string
   upload: UploadInfo
+  /** 64 unsigned brightness bytes, row-major. Cell 0 is cells[0]. */
+  cells: number[]
 }
 
 export interface HealthResponse {

@@ -11,7 +11,11 @@ const example = {
     declared_mime: 'image/png',
     detected_mime: 'image/png',
     bytes: 108,
+    width: 20,
+    height: 10,
+    format: 'PNG',
   },
+  cells: Array.from({ length: 64 }, () => 0),
 }
 
 function stubFetch(response: Response) {

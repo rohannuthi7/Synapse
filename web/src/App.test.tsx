@@ -15,6 +15,7 @@ const inference = {
     height: 640,
     format: 'PNG',
   },
+  cells: Array.from({ length: 64 }, () => 0),
 }
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status })

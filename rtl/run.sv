@@ -14,10 +14,10 @@ module run (
  * One score module is reused for digits 0 through 9, one digit per clock.
  * w_digit is the 64 weights of the digit currently selected.
  * sum is that digit's 22-bit score. SCORE stores it in score_out[digit].
- * scores_ready is 1 for the clock when digit 9 has just been stored.
+ * scores_ready is 1 for one clock after digit 9's sum is already in score_out.
  */
 
-    typedef enum logic {IDLE,SCORE} state_t; 
+    typedef enum logic [1:0] {IDLE, SCORE, DONE} state_t; 
 
     state_t state;
     logic [3:0] digit; 
@@ -53,11 +53,14 @@ module run (
                 SCORE: begin 
                     score_out[digit] <= sum; // sum is already the score for this digit
                     if (digit == 4'd9) begin 
-                        scores_ready <= 1'b1; // one clock, cleared at the top next cycle
-                        state <= IDLE; 
+                        state <= DONE; // next clock the new score_out[9] is visible
                     end else begin 
                         digit <= digit + 1; 
                     end 
+                end
+                DONE: begin
+                    scores_ready <= 1'b1; // one clock, cleared at the top next cycle
+                    state <= IDLE;
                 end
             endcase
         end

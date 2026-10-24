@@ -31,9 +31,11 @@ describe('UploadStatus', () => {
         height: 640,
         format: 'PNG',
       },
+      cells: Array.from({ length: 64 }, (_, index) => (index === 0 ? 255 : 0)),
     }
     render(<UploadStatus state={{ status: 'done', file, result }} />)
     expect(screen.getByRole('status')).toHaveTextContent('PNG, 640 × 640 px, 59,153 bytes.')
+    expect(screen.getByRole('img', { name: '8 by 8 brightness' })).toBeInTheDocument()
   })
 
   it('explains a client-side rejection by type and by size', () => {

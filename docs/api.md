@@ -27,9 +27,12 @@ The`filename` can also be `null` because the clients doesn't need to send one.
     "width": 20,
     "height": 10,
     "format": "PNG"
-  }
+  },
+  "cells": [0, 12, 255]
 }
 ```
+
+`cells` is 64 unsigned brightness bytes, row-major, cell 0 first. The example above shows only the shape; a real response has all 64. Ink is bright, near 255, and the background is dark. This is the FRAME payload.
 
 `width`, `height` and `format` come from fully decoding the image with Pillow, so they prove the file is a real, readable image and not just one with a valid signature. `format` is Pillow's name for it (`"PNG"` or `"JPEG"`).
 

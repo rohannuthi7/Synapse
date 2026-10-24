@@ -261,6 +261,21 @@ def crop_and_center(grid: np.ndarray) -> np.ndarray:
     return _pad_to_square(cropped, background)
 
 
+def to_frame(img: Image.Image) -> list[int]:
+    """Return 64 brightness bytes, row-major, cell 0 first.
+
+    Ink is bright (near 255) and the background is dark. This is the FRAME
+    payload the FPGA stores in x[0:63].
+    """
+    oriented = fix_orientation(img)
+    flat = flatten_alpha(oriented)
+    gray = to_grayscale(flat)
+    ink_bright = normalize_polarity(gray)
+    centered = crop_and_center(ink_bright)
+    small = downsample(centered)
+    return [int(value) for value in small.reshape(-1)]
+
+
 def downsample(grid: np.ndarray, size: int = 8) -> np.ndarray:
     """Average a square uint8 grid down to (size, size), still 0-255."""
     if grid.ndim != 2 or grid.shape[0] != grid.shape[1]:
