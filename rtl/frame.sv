@@ -17,7 +17,7 @@ module frame (
     always_ff @(posedge clk) begin
         if (rst) begin
             for (int i = 0; i < 64; i++)
-                x[i] <= 8h'00;
+                x[i] <= 8'h00;
         end else if (good && opcode == 8'h02) begin
             for (int i = 0; i < 64; i++)
                 x[i] <= payload[i]; // cell 0 is payload[0]
