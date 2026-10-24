@@ -1,0 +1,8 @@
+@use '@carbon/styles/scss/spacing' as *;
+
+// The square and the values toggle under it.
+.slot {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-04;
+}

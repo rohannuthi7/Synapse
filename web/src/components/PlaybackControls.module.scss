@@ -1,0 +1,130 @@
+@use '@carbon/styles/scss/theme' as *;
+@use '@carbon/styles/scss/spacing' as *;
+@use '@carbon/styles/scss/type' as *;
+@use '@carbon/styles/scss/breakpoint' as *;
+@use '@carbon/styles/scss/utilities/visually-hidden' as *;
+
+.controls {
+  padding-block-start: $spacing-05;
+  border-block-start: 1px solid $border-subtle-00;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-05;
+  align-items: center;
+}
+
+.buttons {
+  display: flex;
+}
+
+// Carbon ghost icon button: 48px square, no fill until hovered.
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: $spacing-09;
+  block-size: $spacing-09;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  fill: $icon-primary;
+
+  &:hover {
+    background: $layer-hover-01;
+  }
+}
+
+.speed {
+  display: flex;
+  align-items: center;
+  gap: $spacing-04;
+}
+
+.speedLabel {
+  @include type-style('label-01');
+  color: $text-secondary;
+}
+
+// Square segmented buttons, 1px apart; the pressed one is inverted.
+.segments {
+  display: flex;
+  gap: 1px;
+}
+
+.segment {
+  min-inline-size: 3.5rem;
+  block-size: $spacing-09;
+  padding-inline: $spacing-05;
+  border: 0;
+  background: $layer-accent-01;
+  color: $text-primary;
+  font: inherit;
+  cursor: pointer;
+
+  &:hover {
+    background: $layer-accent-hover-01;
+  }
+
+  &[aria-pressed='true'] {
+    background: $layer-selected-inverse;
+    color: $text-inverse;
+  }
+
+  // The focus ring has to stay visible on the light pressed button.
+  &[aria-pressed='true']:focus-visible {
+    outline-color: $focus-inverse;
+  }
+}
+
+.footnote {
+  @include type-style('label-01');
+  margin-block-start: $spacing-03;
+  color: $text-helper;
+}
+
+// Narrow screens: two full-width rows, four transport buttons then the three
+// speeds, as in the mobile mockup. Each control is still 48px tall.
+@include breakpoint-down(md) {
+  .row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1px;
+  }
+
+  .buttons {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1px;
+  }
+
+  .iconButton {
+    inline-size: auto;
+    background: $layer-01;
+
+    &:hover {
+      background: $layer-hover-01;
+    }
+  }
+
+  .speed {
+    display: block;
+  }
+
+  // The group is still named "Playback speed"; the word is dropped visually.
+  .speedLabel {
+    @include visually-hidden;
+  }
+
+  .segments {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .segment {
+    min-inline-size: 0;
+  }
+}

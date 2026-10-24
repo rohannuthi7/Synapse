@@ -1,0 +1,180 @@
+@use '@carbon/styles/scss/theme' as *;
+@use '@carbon/styles/scss/spacing' as *;
+@use '@carbon/styles/scss/type' as *;
+@use '@carbon/styles/scss/utilities/visually-hidden' as *;
+
+.main {
+  flex: 1 1 auto;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-07;
+  // Lets the wide stage track scroll inside the column on a phone instead
+  // of stretching the column, and the page, past the screen.
+  min-inline-size: 0;
+  padding-block: $spacing-09;
+}
+
+// No notification box and no colored side bar: an icon and plain text.
+.heading {
+  @include type-style('heading-03');
+  display: flex;
+  align-items: center;
+  gap: $spacing-04;
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.warning {
+  flex: none;
+  fill: $support-error;
+}
+
+.trackScroll {
+  // The containing block for the visually hidden state labels, which are
+  // absolutely positioned and would otherwise widen the page past it.
+  position: relative;
+  overflow-x: auto;
+}
+
+// Horizontal, read-only progress: done, the failed stage, then not run.
+.track {
+  display: flex;
+  min-inline-size: 55rem;
+  max-inline-size: 75rem;
+  list-style: none;
+}
+
+.step {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: $spacing-03;
+  min-inline-size: 5rem;
+  padding: $spacing-03 $spacing-03 0 0;
+  border-block-start: 2px solid $border-subtle-00;
+  color: $interactive;
+
+  &[data-state='complete'] {
+    border-color: $interactive;
+  }
+
+  &[data-state='failed'] {
+    border-color: $support-error;
+  }
+
+  &[data-state='not-run'] {
+    color: $border-strong-01;
+  }
+}
+
+.stepName {
+  @include type-style('label-01');
+  color: $text-primary;
+
+  .step[data-state='failed'] & {
+    font-weight: 600;
+  }
+
+  .step[data-state='not-run'] & {
+    color: $text-helper;
+  }
+}
+
+.stepTime {
+  @include type-style('code-01');
+  color: $text-helper;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: 6rem minmax(0, 1fr);
+  column-gap: $spacing-06;
+  row-gap: $spacing-05;
+  align-items: baseline;
+  max-inline-size: 50rem;
+  padding-block-start: $spacing-06;
+  border-block-start: 1px solid $border-subtle-00;
+
+  dt {
+    @include type-style('label-01');
+    color: $text-secondary;
+  }
+
+  // URLs and function paths in mono have no spaces to wrap at; on a phone
+  // they would push the page sideways.
+  dd {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+.snippet {
+  @include type-style('code-02');
+  padding: $spacing-02 $spacing-03;
+  background: $layer-01;
+}
+
+.mono {
+  @include type-style('code-02');
+}
+
+.code {
+  color: $text-error;
+}
+
+.status {
+  color: $text-secondary;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-05;
+}
+
+.primary {
+  min-inline-size: 15rem;
+}
+
+// Label left, chevron right, 32px apart; the chevron turns when open.
+.jsonToggle {
+  gap: $spacing-07;
+  padding-inline: $spacing-05;
+
+  :global(.cds--btn__icon) {
+    margin-inline-start: 0;
+  }
+
+  &[data-open='true'] :global(.cds--btn__icon) {
+    transform: rotate(180deg);
+  }
+}
+
+.jsonBlock {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-03;
+  max-inline-size: 50rem;
+}
+
+.jsonNote {
+  @include type-style('label-01');
+  color: $text-helper;
+}
+
+.json {
+  @include type-style('code-01');
+  overflow-x: auto;
+  padding: $spacing-05;
+  background: $layer-01;
+  color: $text-primary;
+}
+
+.visuallyHidden {
+  @include visually-hidden;
+}

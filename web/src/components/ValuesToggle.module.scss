@@ -1,0 +1,48 @@
+@use '@carbon/styles/scss/theme' as *;
+@use '@carbon/styles/scss/spacing' as *;
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-03;
+  align-self: flex-start;
+  // 44px touch target.
+  min-block-size: 2.75rem;
+  cursor: pointer;
+
+  &[data-hidden='true'] {
+    visibility: hidden;
+  }
+}
+
+// Square, like Carbon's checkbox, without its label wrapper.
+.box {
+  display: grid;
+  place-content: center;
+  inline-size: 1rem;
+  block-size: 1rem;
+  margin: 0;
+  border: 1px solid $icon-primary;
+  background: transparent;
+  appearance: none;
+  cursor: pointer;
+
+  &:checked {
+    background: $icon-primary;
+  }
+
+  // The tick: two borders of a small box, turned 45°.
+  &:checked::after {
+    content: '';
+    inline-size: 0.5rem;
+    block-size: 0.25rem;
+    border-block-end: 2px solid $icon-inverse;
+    border-inline-start: 2px solid $icon-inverse;
+    transform: translateY(-1px) rotate(-45deg);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $focus;
+    outline-offset: 1px;
+  }
+}

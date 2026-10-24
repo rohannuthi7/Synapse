@@ -11,6 +11,15 @@ _SIGNATURES: dict[str, tuple[bytes, ...]] = {
 }
 
 
+def matched_signature(data: bytes) -> bytes:
+    """The leading bytes that identified the file's type, or b"" if none did."""
+    for prefixes in _SIGNATURES.values():
+        for prefix in prefixes:
+            if data.startswith(prefix):
+                return prefix
+    return b""
+
+
 def detect_mime(data: bytes) -> str:
     """Return the MIME type implied by the file signature, or raise."""
     for mime, prefixes in _SIGNATURES.items():

@@ -1,0 +1,68 @@
+@use '@carbon/styles/scss/theme' as *;
+@use '@carbon/styles/scss/spacing' as *;
+@use '@carbon/styles/scss/type' as *;
+@use '@carbon/styles/scss/breakpoint' as *;
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-03;
+  padding-block-start: $spacing-05;
+  border-block-start: 1px solid $border-subtle-00;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1px;
+}
+
+// Label left, icon right, 32px apart, as on the page's other buttons.
+.labelled {
+  gap: $spacing-07;
+  padding-inline: $spacing-05;
+
+  :global(.cds--btn__icon) {
+    margin-inline-start: 0;
+  }
+}
+
+// 48px square ghost icon button, in the link color like the ghost labels.
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: $spacing-09;
+  block-size: $spacing-09;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  fill: $link-primary;
+
+  &:hover {
+    background: $layer-hover-01;
+  }
+}
+
+.note {
+  @include type-style('label-01');
+  color: $text-helper;
+}
+
+// Narrow screens: full-width rows like the playback controls, with the one
+// primary action on a row of its own.
+@include breakpoint-down(md) {
+  .row > :global(.cds--btn) {
+    flex: 1 1 auto;
+    max-inline-size: none;
+  }
+
+  .row > :global(.cds--btn--primary) {
+    flex-basis: 100%;
+  }
+
+  .iconButton {
+    background: $layer-01;
+  }
+}

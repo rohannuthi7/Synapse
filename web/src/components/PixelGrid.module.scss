@@ -1,0 +1,75 @@
+@use '@carbon/styles/scss/colors';
+@use '@carbon/styles/scss/theme' as *;
+@use '@carbon/styles/scss/motion' as *;
+@use '@carbon/styles/scss/type' as *;
+
+$easing: motion(standard, productive);
+// Carbon duration tokens, scaled by the playback speed set on the viewer.
+$speed: var(--playback-speed, 1);
+$row-delay: calc(var(--row) * 30ms / #{$speed});
+
+.grid {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  grid-template-rows: repeat(8, minmax(0, 1fr));
+}
+
+.cell {
+  @include type-style('code-02');
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition:
+    opacity calc(#{$duration-fast-02} / #{$speed}) $easing $row-delay,
+    background-color calc(#{$duration-fast-02} / #{$speed}) $easing $row-delay;
+
+  &[data-ink='light'] {
+    color: $text-on-color;
+  }
+
+  &[data-ink='dark'] {
+    color: colors.$black;
+  }
+
+  .grid[data-filled='true'] & {
+    opacity: 1;
+  }
+}
+
+.lines {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  opacity: 0;
+  pointer-events: none;
+  stroke: $icon-on-color;
+  stroke-width: 1px;
+  transition: opacity calc(#{$duration-moderate-02} / #{$speed}) $easing;
+
+  &[data-lines='full'] {
+    opacity: 1;
+  }
+
+  // After Downsample the lines stay as a faint reminder of the cell edges.
+  &[data-lines='faint'] {
+    opacity: 0.3;
+  }
+}
+
+.grid[data-instant='true'] {
+  .cell,
+  .lines {
+    transition: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cell,
+  .lines {
+    transition: none !important;
+  }
+}

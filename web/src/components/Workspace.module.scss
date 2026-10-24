@@ -1,0 +1,85 @@
+@use '@carbon/styles/scss/theme' as *;
+@use '@carbon/styles/scss/spacing' as *;
+@use '@carbon/styles/scss/breakpoint' as *;
+
+.main {
+  flex: 1 1 auto;
+
+  // Narrow: the stage bar and the viewer are separate rows; pack them to the
+  // top instead of sharing the page's spare height between them.
+  @include breakpoint-down(md) {
+    align-content: start;
+  }
+
+  &:focus {
+    outline: none;
+  }
+}
+
+// Narrow: the summary bar runs edge to edge under the header, and the list
+// opens below it. md and up: the list sits left of the viewer, its rule
+// midway between list and viewer with 32px of space on each side.
+.stages {
+  @include breakpoint-down(md) {
+    margin-inline: 0;
+  }
+
+  @include breakpoint(md) {
+    margin-inline-end: 0;
+    padding-block: $spacing-06;
+    padding-inline-end: $spacing-07;
+    border-inline-end: 1px solid $border-subtle-00;
+  }
+}
+
+.summary {
+  @include breakpoint(md) {
+    display: none;
+  }
+}
+
+.list {
+  @include breakpoint-down(md) {
+    padding: $spacing-06 $spacing-05;
+    border-block-end: 1px solid $border-subtle-00;
+
+    &[data-open='false'] {
+      display: none;
+    }
+  }
+}
+
+.viewer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-06;
+  align-content: flex-start;
+  align-items: flex-start;
+  min-inline-size: 0;
+  padding-block: $spacing-05;
+
+  @include breakpoint(md) {
+    gap: $spacing-07;
+    padding-block: $spacing-07;
+    padding-inline-start: $spacing-05;
+  }
+}
+
+// The fixed 512px square and what sits under it.
+.slot {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-05;
+  inline-size: 100%;
+  max-inline-size: 32rem;
+}
+
+// Sits beside the square when there is room and wraps under it when not.
+.readout {
+  display: flex;
+  flex: 1 1 20rem;
+  flex-direction: column;
+  gap: $spacing-06;
+  min-inline-size: 0;
+  max-inline-size: 35rem;
+}

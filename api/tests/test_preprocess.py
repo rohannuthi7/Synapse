@@ -631,3 +631,36 @@ def test_pipeline_end_to_end_on_a_thick_L() -> None:
     # corner is empty paper.
     assert grid[1:6, 2].min() > 200
     assert grid[0:3, 5:8].max() < 20
+
+
+def test_stretch_contrast_maps_min_to_0_and_max_to_255() -> None:
+    from app.services.preprocess import stretch_contrast
+
+    grid = np.array([[32, 104], [177, 32]], dtype=np.uint8)
+    result = stretch_contrast(grid)
+    assert result.dtype == np.uint8
+    # (104 - 32) * 255 / (177 - 32) = 126.6, rounded rather than truncated.
+    assert result.tolist() == [[0, 127], [255, 0]]
+
+
+def test_stretch_contrast_leaves_a_flat_grid_alone() -> None:
+    from app.services.preprocess import stretch_contrast
+
+    grid = np.full((8, 8), 90, dtype=np.uint8)
+    assert stretch_contrast(grid).tolist() == grid.tolist()
+
+
+def test_crop_digit_reports_cutoff_and_inclusive_box() -> None:
+    from app.services.preprocess import crop_digit
+
+    crop = crop_digit(grid_with_block((300, 400), 100, 150, 60, 40))
+    assert (crop.top, crop.left, crop.bottom, crop.right) == (100, 150, 159, 189)
+    assert 10 < crop.cutoff < 200
+
+
+def test_faint_ink_error_says_what_was_measured() -> None:
+    from app.services.preprocess import crop_digit
+
+    with pytest.raises(NoDigitFoundError) as raised:
+        crop_digit(grid_with_block((300, 400), 100, 150, 60, 40, ink=60, paper=30))
+    assert "needs 50" in raised.value.detail

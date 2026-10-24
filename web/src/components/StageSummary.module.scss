@@ -1,0 +1,51 @@
+@use '@carbon/styles/scss/theme' as *;
+@use '@carbon/styles/scss/spacing' as *;
+@use '@carbon/styles/scss/type' as *;
+
+// Full width, edge to edge, like the mockup's bar under the header.
+.summary {
+  display: flex;
+  align-items: center;
+  gap: $spacing-04;
+  inline-size: 100%;
+  min-block-size: $spacing-09;
+  padding: 0 $spacing-05;
+  border: 0;
+  border-block-end: 1px solid $border-subtle-00;
+  background: $background;
+  color: $text-primary;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+
+  &:hover {
+    background: $background-hover;
+  }
+}
+
+.mark {
+  display: flex;
+  color: $interactive;
+}
+
+.where {
+  flex: 1 1 auto;
+}
+
+.label {
+  font-weight: 600;
+}
+
+.all {
+  @include type-style('label-01');
+  color: $text-secondary;
+}
+
+.chevron {
+  flex: none;
+  fill: $icon-primary;
+
+  &[data-expanded='true'] {
+    transform: rotate(180deg);
+  }
+}

@@ -1,0 +1,20 @@
+@use '@carbon/styles/scss/spacing' as *;
+
+// Every child in the same cell: the cell takes the tallest child's height.
+.stack {
+  display: grid;
+
+  > * {
+    grid-area: 1 / 1;
+  }
+}
+
+.sizer {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+// The visible version sits at the top of the reserved space.
+.current {
+  align-self: start;
+}

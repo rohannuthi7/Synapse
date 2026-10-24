@@ -23,7 +23,7 @@ function AppHeader() {
             aria-label="Synapse on GitHub (opens in a new tab)"
             title="GitHub"
           >
-            <LogoGithub size={20} aria-hidden="true" />
+            <LogoGithub size={32} aria-hidden="true" />
           </a>
         </Column>
       </Grid>
