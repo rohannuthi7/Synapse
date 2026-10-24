@@ -75,6 +75,8 @@ module synapse_top #(
     );
 
     winning_digit u_winner (
+        .clk       (clk),
+        .rst       (rst),
         .score_out (score_out),
         .digit     (digit),
         .flags     (flags)

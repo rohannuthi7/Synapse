@@ -1,0 +1,37 @@
+
+State Machine - |synapse_top|result:u_result|uart_tx:u_tx|state
+Name state.S_STOP state.S_DATA state.S_START state.S_IDLE 
+state.S_IDLE 0 0 0 0 
+state.S_START 0 0 1 1 
+state.S_DATA 0 1 0 1 
+state.S_STOP 1 0 0 1 
+
+State Machine - |synapse_top|uart_rx:u_rx|state
+Name state.S_STOP state.S_DATA state.S_START state.S_IDLE 
+state.S_IDLE 0 0 0 0 
+state.S_START 0 0 1 1 
+state.S_DATA 0 1 0 1 
+state.S_STOP 1 0 0 1 
+
+State Machine - |synapse_top|result:u_result|state
+Name state.WAIT_HI state.SEND state.LOAD state.IDLE state.WAIT_LO 
+state.IDLE 0 0 0 0 0 
+state.LOAD 0 0 1 1 0 
+state.SEND 0 1 0 1 0 
+state.WAIT_HI 1 0 0 1 0 
+state.WAIT_LO 0 0 0 1 1 
+
+State Machine - |synapse_top|packet:u_packet|state
+Name state.PAYLOAD state.LENGTH state.OPCODE state.START state.CHECKSUM 
+state.START 0 0 0 0 0 
+state.OPCODE 0 0 1 1 0 
+state.LENGTH 0 1 0 1 0 
+state.PAYLOAD 1 0 0 1 0 
+state.CHECKSUM 0 0 0 1 1 
+
+State Machine - |synapse_top|run:u_run|state
+Name state.DONE state.WAIT state.START state.IDLE 
+state.IDLE 0 0 0 0 
+state.START 0 0 1 1 
+state.WAIT 0 1 0 1 
+state.DONE 1 0 0 1 

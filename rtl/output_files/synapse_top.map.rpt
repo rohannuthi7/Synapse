@@ -1,0 +1,887 @@
+Analysis & Synthesis report for synapse_top
+Sat Oct 24 16:59:58 2026
+Quartus Prime Version 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+
+
+---------------------
+; Table of Contents ;
+---------------------
+  1. Legal Notice
+  2. Analysis & Synthesis Summary
+  3. Analysis & Synthesis Settings
+  4. Parallel Compilation
+  5. Analysis & Synthesis Source Files Read
+  6. Analysis & Synthesis Resource Usage Summary
+  7. Analysis & Synthesis Resource Utilization by Entity
+  8. Analysis & Synthesis DSP Block Usage Summary
+  9. State Machine - |synapse_top|result:u_result|uart_tx:u_tx|state
+ 10. State Machine - |synapse_top|uart_rx:u_rx|state
+ 11. State Machine - |synapse_top|result:u_result|state
+ 12. State Machine - |synapse_top|packet:u_packet|state
+ 13. State Machine - |synapse_top|run:u_run|state
+ 14. Registers Removed During Synthesis
+ 15. Removed Registers Triggering Further Register Optimizations
+ 16. General Register Statistics
+ 17. Multiplexer Restructuring Statistics (Restructuring Performed)
+ 18. Parameter Settings for User Entity Instance: Top-level Entity: |synapse_top
+ 19. Parameter Settings for User Entity Instance: uart_rx:u_rx
+ 20. Parameter Settings for User Entity Instance: result:u_result
+ 21. Parameter Settings for User Entity Instance: result:u_result|uart_tx:u_tx
+ 22. Port Connectivity Checks: "packet:u_packet"
+ 23. Post-Synthesis Netlist Statistics for Top Partition
+ 24. Elapsed Time Per Partition
+ 25. Analysis & Synthesis Messages
+ 26. Analysis & Synthesis Suppressed Messages
+
+
+
+----------------
+; Legal Notice ;
+----------------
+Copyright (C) 2025  Altera Corporation. All rights reserved.
+Your use of Altera Corporation's design tools, logic functions 
+and other software and tools, and any partner logic 
+functions, and any output files from any of the foregoing 
+(including device programming or simulation files), and any 
+associated documentation or information are expressly subject 
+to the terms and conditions of the Altera Program License 
+Subscription Agreement, the Altera Quartus Prime License Agreement,
+the Altera IP License Agreement, or other applicable license
+agreement, including, without limitation, that your use is for
+the sole purpose of programming logic devices manufactured by
+Altera and sold by Altera or its authorized distributors.  Please
+refer to the Altera Software License Subscription Agreements 
+on the Quartus Prime software download page.
+
+
+
++-----------------------------------------------------------------------------------+
+; Analysis & Synthesis Summary                                                      ;
++---------------------------------+-------------------------------------------------+
+; Analysis & Synthesis Status     ; Successful - Sat Oct 24 16:59:58 2026           ;
+; Quartus Prime Version           ; 25.1std.0 Build 1129 10/21/2025 SC Lite Edition ;
+; Revision Name                   ; synapse_top                                     ;
+; Top-level Entity Name           ; synapse_top                                     ;
+; Family                          ; Cyclone V                                       ;
+; Logic utilization (in ALMs)     ; N/A                                             ;
+; Total registers                 ; 10049                                           ;
+; Total pins                      ; 4                                               ;
+; Total virtual pins              ; 0                                               ;
+; Total block memory bits         ; 0                                               ;
+; Total DSP Blocks                ; 64                                              ;
+; Total HSSI RX PCSs              ; 0                                               ;
+; Total HSSI PMA RX Deserializers ; 0                                               ;
+; Total HSSI TX PCSs              ; 0                                               ;
+; Total HSSI PMA TX Serializers   ; 0                                               ;
+; Total PLLs                      ; 0                                               ;
+; Total DLLs                      ; 0                                               ;
++---------------------------------+-------------------------------------------------+
+
+
++---------------------------------------------------------------------------------------------------------------------------+
+; Analysis & Synthesis Settings                                                                                             ;
++---------------------------------------------------------------------------------+--------------------+--------------------+
+; Option                                                                          ; Setting            ; Default Value      ;
++---------------------------------------------------------------------------------+--------------------+--------------------+
+; Device                                                                          ; 5CGXFC7C7F23C8     ;                    ;
+; Top-level entity name                                                           ; synapse_top        ; synapse_top        ;
+; Family name                                                                     ; Cyclone V          ; Cyclone V          ;
+; Use smart compilation                                                           ; Off                ; Off                ;
+; Enable parallel Assembler and Timing Analyzer during compilation                ; On                 ; On                 ;
+; Enable compact report table                                                     ; Off                ; Off                ;
+; Restructure Multiplexers                                                        ; Auto               ; Auto               ;
+; MLAB Add Timing Constraints For Mixed-Port Feed-Through Mode Setting Don't Care ; Off                ; Off                ;
+; Create Debugging Nodes for IP Cores                                             ; Off                ; Off                ;
+; Preserve fewer node names                                                       ; On                 ; On                 ;
+; Intel FPGA IP Evaluation Mode                                                   ; Enable             ; Enable             ;
+; Verilog Version                                                                 ; Verilog_2001       ; Verilog_2001       ;
+; VHDL Version                                                                    ; VHDL_1993          ; VHDL_1993          ;
+; State Machine Processing                                                        ; Auto               ; Auto               ;
+; Safe State Machine                                                              ; Off                ; Off                ;
+; Extract Verilog State Machines                                                  ; On                 ; On                 ;
+; Extract VHDL State Machines                                                     ; On                 ; On                 ;
+; Ignore Verilog initial constructs                                               ; Off                ; Off                ;
+; Iteration limit for constant Verilog loops                                      ; 5000               ; 5000               ;
+; Iteration limit for non-constant Verilog loops                                  ; 250                ; 250                ;
+; Add Pass-Through Logic to Inferred RAMs                                         ; On                 ; On                 ;
+; Infer RAMs from Raw Logic                                                       ; On                 ; On                 ;
+; Parallel Synthesis                                                              ; On                 ; On                 ;
+; DSP Block Balancing                                                             ; Auto               ; Auto               ;
+; NOT Gate Push-Back                                                              ; On                 ; On                 ;
+; Power-Up Don't Care                                                             ; On                 ; On                 ;
+; Remove Redundant Logic Cells                                                    ; Off                ; Off                ;
+; Remove Duplicate Registers                                                      ; On                 ; On                 ;
+; Ignore CARRY Buffers                                                            ; Off                ; Off                ;
+; Ignore CASCADE Buffers                                                          ; Off                ; Off                ;
+; Ignore GLOBAL Buffers                                                           ; Off                ; Off                ;
+; Ignore ROW GLOBAL Buffers                                                       ; Off                ; Off                ;
+; Ignore LCELL Buffers                                                            ; Off                ; Off                ;
+; Ignore SOFT Buffers                                                             ; On                 ; On                 ;
+; Limit AHDL Integers to 32 Bits                                                  ; Off                ; Off                ;
+; Optimization Technique                                                          ; Balanced           ; Balanced           ;
+; Carry Chain Length                                                              ; 70                 ; 70                 ;
+; Auto Carry Chains                                                               ; On                 ; On                 ;
+; Auto Open-Drain Pins                                                            ; On                 ; On                 ;
+; Perform WYSIWYG Primitive Resynthesis                                           ; Off                ; Off                ;
+; Auto ROM Replacement                                                            ; On                 ; On                 ;
+; Auto RAM Replacement                                                            ; On                 ; On                 ;
+; Auto DSP Block Replacement                                                      ; On                 ; On                 ;
+; Auto Shift Register Replacement                                                 ; Auto               ; Auto               ;
+; Allow Shift Register Merging across Hierarchies                                 ; Auto               ; Auto               ;
+; Auto Clock Enable Replacement                                                   ; On                 ; On                 ;
+; Strict RAM Replacement                                                          ; Off                ; Off                ;
+; Allow Synchronous Control Signals                                               ; On                 ; On                 ;
+; Force Use of Synchronous Clear Signals                                          ; Off                ; Off                ;
+; Auto Resource Sharing                                                           ; Off                ; Off                ;
+; Allow Any RAM Size For Recognition                                              ; Off                ; Off                ;
+; Allow Any ROM Size For Recognition                                              ; Off                ; Off                ;
+; Allow Any Shift Register Size For Recognition                                   ; Off                ; Off                ;
+; Use LogicLock Constraints during Resource Balancing                             ; On                 ; On                 ;
+; Ignore translate_off and synthesis_off directives                               ; Off                ; Off                ;
+; Timing-Driven Synthesis                                                         ; On                 ; On                 ;
+; Report Parameter Settings                                                       ; On                 ; On                 ;
+; Report Source Assignments                                                       ; On                 ; On                 ;
+; Report Connectivity Checks                                                      ; On                 ; On                 ;
+; Ignore Maximum Fan-Out Assignments                                              ; Off                ; Off                ;
+; Synchronization Register Chain Length                                           ; 3                  ; 3                  ;
+; Power Optimization During Synthesis                                             ; Normal compilation ; Normal compilation ;
+; HDL message level                                                               ; Level2             ; Level2             ;
+; Suppress Register Optimization Related Messages                                 ; Off                ; Off                ;
+; Number of Removed Registers Reported in Synthesis Report                        ; 5000               ; 5000               ;
+; Number of Swept Nodes Reported in Synthesis Report                              ; 5000               ; 5000               ;
+; Number of Inverted Registers Reported in Synthesis Report                       ; 100                ; 100                ;
+; Clock MUX Protection                                                            ; On                 ; On                 ;
+; Auto Gated Clock Conversion                                                     ; Off                ; Off                ;
+; Block Design Naming                                                             ; Auto               ; Auto               ;
+; SDC constraint protection                                                       ; Off                ; Off                ;
+; Synthesis Effort                                                                ; Auto               ; Auto               ;
+; Shift Register Replacement - Allow Asynchronous Clear Signal                    ; On                 ; On                 ;
+; Pre-Mapping Resynthesis Optimization                                            ; Off                ; Off                ;
+; Analysis & Synthesis Message Level                                              ; Medium             ; Medium             ;
+; Disable Register Merging Across Hierarchies                                     ; Auto               ; Auto               ;
+; Resource Aware Inference For Block RAM                                          ; On                 ; On                 ;
+; Automatic Parallel Synthesis                                                    ; On                 ; On                 ;
+; Partial Reconfiguration Bitstream ID                                            ; Off                ; Off                ;
++---------------------------------------------------------------------------------+--------------------+--------------------+
+
+
++------------------------------------------+
+; Parallel Compilation                     ;
++----------------------------+-------------+
+; Processors                 ; Number      ;
++----------------------------+-------------+
+; Number detected on machine ; 20          ;
+; Maximum allowed            ; 14          ;
+;                            ;             ;
+; Average used               ; 4.09        ;
+; Maximum used               ; 14          ;
+;                            ;             ;
+; Usage by Processor         ; % Time Used ;
+;     Processor 1            ; 100.0%      ;
+;     Processor 2            ;  26.7%      ;
+;     Processor 3            ;  26.7%      ;
+;     Processor 4            ;  26.1%      ;
+;     Processor 5            ;  26.1%      ;
+;     Processor 6            ;  25.7%      ;
+;     Processor 7            ;  25.7%      ;
+;     Processor 8            ;  25.7%      ;
+;     Processor 9            ;  25.7%      ;
+;     Processor 10           ;  25.6%      ;
+;     Processor 11           ;  25.6%      ;
+;     Processor 12           ;  25.6%      ;
+;     Processor 13           ;  23.9%      ;
+;     Processor 14           ;   0.1%      ;
++----------------------------+-------------+
+
+
++---------------------------------------------------------------------------------------------------------------------------------------+
+; Analysis & Synthesis Source Files Read                                                                                                ;
++----------------------------------+-----------------+------------------------------+-----------------------------------------+---------+
+; File Name with User-Entered Path ; Used in Netlist ; File Type                    ; File Name with Absolute Path            ; Library ;
++----------------------------------+-----------------+------------------------------+-----------------------------------------+---------+
+; winning_digit.sv                 ; yes             ; User SystemVerilog HDL File  ; C:/synapse/Synapse/rtl/winning_digit.sv ;         ;
+; weights.sv                       ; yes             ; User SystemVerilog HDL File  ; C:/synapse/Synapse/rtl/weights.sv       ;         ;
+; uart_tx.sv                       ; yes             ; User SystemVerilog HDL File  ; C:/synapse/Synapse/rtl/uart_tx.sv       ;         ;
+; uart_rx.sv                       ; yes             ; User SystemVerilog HDL File  ; C:/synapse/Synapse/rtl/uart_rx.sv       ;         ;
+; score.sv                         ; yes             ; User SystemVerilog HDL File  ; C:/synapse/Synapse/rtl/score.sv         ;         ;
+; run.sv                           ; yes             ; User SystemVerilog HDL File  ; C:/synapse/Synapse/rtl/run.sv           ;         ;
+; result.sv                        ; yes             ; User SystemVerilog HDL File  ; C:/synapse/Synapse/rtl/result.sv        ;         ;
+; packet.sv                        ; yes             ; User SystemVerilog HDL File  ; C:/synapse/Synapse/rtl/packet.sv        ;         ;
+; frame.sv                         ; yes             ; User SystemVerilog HDL File  ; C:/synapse/Synapse/rtl/frame.sv         ;         ;
+; synapse_top.sv                   ; yes             ; User SystemVerilog HDL File  ; C:/synapse/Synapse/rtl/synapse_top.sv   ;         ;
++----------------------------------+-----------------+------------------------------+-----------------------------------------+---------+
+
+
++---------------------------------------------------------+
+; Analysis & Synthesis Resource Usage Summary             ;
++---------------------------------------------+-----------+
+; Resource                                    ; Usage     ;
++---------------------------------------------+-----------+
+; Estimate of Logic utilization (ALMs needed) ; 5920      ;
+;                                             ;           ;
+; Combinational ALUT usage for logic          ; 3761      ;
+;     -- 7 input functions                    ; 39        ;
+;     -- 6 input functions                    ; 2038      ;
+;     -- 5 input functions                    ; 200       ;
+;     -- 4 input functions                    ; 118       ;
+;     -- <=3 input functions                  ; 1366      ;
+;                                             ;           ;
+; Dedicated logic registers                   ; 10049     ;
+;                                             ;           ;
+; I/O pins                                    ; 4         ;
+;                                             ;           ;
+; Total DSP Blocks                            ; 64        ;
+;                                             ;           ;
+; Maximum fan-out node                        ; clk~input ;
+; Maximum fan-out                             ; 10049     ;
+; Total fan-out                               ; 55179     ;
+; Average fan-out                             ; 3.97      ;
++---------------------------------------------+-----------+
+
+
++-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+; Analysis & Synthesis Resource Utilization by Entity                                                                                                                                                             ;
++-----------------------------+---------------------+---------------------------+-------------------+------------+------+--------------+-------------------------------------------+---------------+--------------+
+; Compilation Hierarchy Node  ; Combinational ALUTs ; Dedicated Logic Registers ; Block Memory Bits ; DSP Blocks ; Pins ; Virtual Pins ; Full Hierarchy Name                       ; Entity Name   ; Library Name ;
++-----------------------------+---------------------+---------------------------+-------------------+------------+------+--------------+-------------------------------------------+---------------+--------------+
+; |synapse_top                ; 3761 (3)            ; 10049 (0)                 ; 0                 ; 64         ; 4    ; 0            ; |synapse_top                              ; synapse_top   ; work         ;
+;    |frame:u_frame|          ; 2 (2)               ; 512 (512)                 ; 0                 ; 0          ; 0    ; 0            ; |synapse_top|frame:u_frame                ; frame         ; work         ;
+;    |packet:u_packet|        ; 147 (147)           ; 561 (561)                 ; 0                 ; 0          ; 0    ; 0            ; |synapse_top|packet:u_packet              ; packet        ; work         ;
+;    |result:u_result|        ; 267 (224)           ; 285 (259)                 ; 0                 ; 0          ; 0    ; 0            ; |synapse_top|result:u_result              ; result        ; work         ;
+;       |uart_tx:u_tx|        ; 43 (43)             ; 26 (26)                   ; 0                 ; 0          ; 0    ; 0            ; |synapse_top|result:u_result|uart_tx:u_tx ; uart_tx       ; work         ;
+;    |run:u_run|              ; 2739 (1567)         ; 3512 (230)                ; 0                 ; 64         ; 0    ; 0            ; |synapse_top|run:u_run                    ; run           ; work         ;
+;       |score:u_score|       ; 1172 (1172)         ; 3282 (3282)               ; 0                 ; 64         ; 0    ; 0            ; |synapse_top|run:u_run|score:u_score      ; score         ; work         ;
+;    |uart_rx:u_rx|           ; 45 (45)             ; 33 (33)                   ; 0                 ; 0          ; 0    ; 0            ; |synapse_top|uart_rx:u_rx                 ; uart_rx       ; work         ;
+;    |weights:u_weights|      ; 16 (16)             ; 5120 (5120)               ; 0                 ; 0          ; 0    ; 0            ; |synapse_top|weights:u_weights            ; weights       ; work         ;
+;    |winning_digit:u_winner| ; 542 (542)           ; 26 (26)                   ; 0                 ; 0          ; 0    ; 0            ; |synapse_top|winning_digit:u_winner       ; winning_digit ; work         ;
++-----------------------------+---------------------+---------------------------+-------------------+------------+------+--------------+-------------------------------------------+---------------+--------------+
+Note: For table entries with two numbers listed, the numbers in parentheses indicate the number of resources of the given type used by the specific entity alone. The numbers listed outside of parentheses indicate the total resources of the given type used by the specific entity and all of its sub-entities in the hierarchy.
+
+
++-------------------------------------------------+
+; Analysis & Synthesis DSP Block Usage Summary    ;
++-----------------------------------+-------------+
+; Statistic                         ; Number Used ;
++-----------------------------------+-------------+
+; Independent 9x9                   ; 64          ;
+; Total number of DSP blocks        ; 64          ;
+;                                   ;             ;
+; Fixed Point Mixed Sign Multiplier ; 64          ;
++-----------------------------------+-------------+
+
+
+Encoding Type:  One-Hot
++----------------------------------------------------------------------------+
+; State Machine - |synapse_top|result:u_result|uart_tx:u_tx|state            ;
++---------------+--------------+--------------+---------------+--------------+
+; Name          ; state.S_STOP ; state.S_DATA ; state.S_START ; state.S_IDLE ;
++---------------+--------------+--------------+---------------+--------------+
+; state.S_IDLE  ; 0            ; 0            ; 0             ; 0            ;
+; state.S_START ; 0            ; 0            ; 1             ; 1            ;
+; state.S_DATA  ; 0            ; 1            ; 0             ; 1            ;
+; state.S_STOP  ; 1            ; 0            ; 0             ; 1            ;
++---------------+--------------+--------------+---------------+--------------+
+
+
+Encoding Type:  One-Hot
++----------------------------------------------------------------------------+
+; State Machine - |synapse_top|uart_rx:u_rx|state                            ;
++---------------+--------------+--------------+---------------+--------------+
+; Name          ; state.S_STOP ; state.S_DATA ; state.S_START ; state.S_IDLE ;
++---------------+--------------+--------------+---------------+--------------+
+; state.S_IDLE  ; 0            ; 0            ; 0             ; 0            ;
+; state.S_START ; 0            ; 0            ; 1             ; 1            ;
+; state.S_DATA  ; 0            ; 1            ; 0             ; 1            ;
+; state.S_STOP  ; 1            ; 0            ; 0             ; 1            ;
++---------------+--------------+--------------+---------------+--------------+
+
+
+Encoding Type:  One-Hot
++--------------------------------------------------------------------------------------+
+; State Machine - |synapse_top|result:u_result|state                                   ;
++---------------+---------------+------------+------------+------------+---------------+
+; Name          ; state.WAIT_HI ; state.SEND ; state.LOAD ; state.IDLE ; state.WAIT_LO ;
++---------------+---------------+------------+------------+------------+---------------+
+; state.IDLE    ; 0             ; 0          ; 0          ; 0          ; 0             ;
+; state.LOAD    ; 0             ; 0          ; 1          ; 1          ; 0             ;
+; state.SEND    ; 0             ; 1          ; 0          ; 1          ; 0             ;
+; state.WAIT_HI ; 1             ; 0          ; 0          ; 1          ; 0             ;
+; state.WAIT_LO ; 0             ; 0          ; 0          ; 1          ; 1             ;
++---------------+---------------+------------+------------+------------+---------------+
+
+
+Encoding Type:  One-Hot
++---------------------------------------------------------------------------------------------+
+; State Machine - |synapse_top|packet:u_packet|state                                          ;
++----------------+---------------+--------------+--------------+-------------+----------------+
+; Name           ; state.PAYLOAD ; state.LENGTH ; state.OPCODE ; state.START ; state.CHECKSUM ;
++----------------+---------------+--------------+--------------+-------------+----------------+
+; state.START    ; 0             ; 0            ; 0            ; 0           ; 0              ;
+; state.OPCODE   ; 0             ; 0            ; 1            ; 1           ; 0              ;
+; state.LENGTH   ; 0             ; 1            ; 0            ; 1           ; 0              ;
+; state.PAYLOAD  ; 1             ; 0            ; 0            ; 1           ; 0              ;
+; state.CHECKSUM ; 0             ; 0            ; 0            ; 1           ; 1              ;
++----------------+---------------+--------------+--------------+-------------+----------------+
+
+
+Encoding Type:  One-Hot
++------------------------------------------------------------------+
+; State Machine - |synapse_top|run:u_run|state                     ;
++-------------+------------+------------+-------------+------------+
+; Name        ; state.DONE ; state.WAIT ; state.START ; state.IDLE ;
++-------------+------------+------------+-------------+------------+
+; state.IDLE  ; 0          ; 0          ; 0           ; 0          ;
+; state.START ; 0          ; 0          ; 1           ; 1          ;
+; state.WAIT  ; 0          ; 1          ; 0           ; 1          ;
+; state.DONE  ; 1          ; 0          ; 0           ; 1          ;
++-------------+------------+------------+-------------+------------+
+
+
++------------------------------------------------------------------------------------------+
+; Registers Removed During Synthesis                                                       ;
++-----------------------------------------+------------------------------------------------+
+; Register name                           ; Reason for Removal                             ;
++-----------------------------------------+------------------------------------------------+
+; winning_digit:u_winner|digit[4..7]      ; Stuck at GND due to stuck port data_in         ;
+; result:u_result|msg[43][7]              ; Stuck at GND due to stuck port data_in         ;
+; result:u_result|msg[43][6]              ; Stuck at GND due to stuck port data_in         ;
+; result:u_result|msg[43][5]              ; Stuck at GND due to stuck port data_in         ;
+; result:u_result|msg[43][4]              ; Stuck at GND due to stuck port data_in         ;
+; result:u_result|msg[44][7]              ; Stuck at GND due to stuck port data_in         ;
+; result:u_result|msg[44][6]              ; Stuck at GND due to stuck port data_in         ;
+; result:u_result|msg[44][5]              ; Stuck at GND due to stuck port data_in         ;
+; result:u_result|msg[44][4]              ; Stuck at GND due to stuck port data_in         ;
+; result:u_result|msg[44][3]              ; Stuck at GND due to stuck port data_in         ;
+; result:u_result|msg[44][2]              ; Stuck at GND due to stuck port data_in         ;
+; result:u_result|msg[44][1]              ; Stuck at GND due to stuck port data_in         ;
+; result:u_result|last_idx[3,5]           ; Merged with result:u_result|last_idx[0]        ;
+; result:u_result|last_idx[4]             ; Merged with result:u_result|last_idx[1]        ;
+; result:u_result|msg[0][2]               ; Merged with result:u_result|msg[0][0]          ;
+; result:u_result|msg[0][5]               ; Merged with result:u_result|msg[0][0]          ;
+; result:u_result|msg[0][7]               ; Merged with result:u_result|msg[0][0]          ;
+; result:u_result|msg[1][7]               ; Merged with result:u_result|msg[0][0]          ;
+; result:u_result|msg[2][1]               ; Merged with result:u_result|msg[1][0]          ;
+; result:u_result|msg[2][3]               ; Merged with result:u_result|msg[1][0]          ;
+; result:u_result|msg[2][5]               ; Merged with result:u_result|msg[1][0]          ;
+; result:u_result|msg[5][6]               ; Merged with result:u_result|msg[5][5]          ;
+; result:u_result|msg[5][7]               ; Merged with result:u_result|msg[5][5]          ;
+; result:u_result|msg[6][0]               ; Merged with result:u_result|msg[5][5]          ;
+; result:u_result|msg[6][1]               ; Merged with result:u_result|msg[5][5]          ;
+; result:u_result|msg[6][2]               ; Merged with result:u_result|msg[5][5]          ;
+; result:u_result|msg[6][3]               ; Merged with result:u_result|msg[5][5]          ;
+; result:u_result|msg[6][4]               ; Merged with result:u_result|msg[5][5]          ;
+; result:u_result|msg[6][5]               ; Merged with result:u_result|msg[5][5]          ;
+; result:u_result|msg[6][6]               ; Merged with result:u_result|msg[5][5]          ;
+; result:u_result|msg[6][7]               ; Merged with result:u_result|msg[5][5]          ;
+; result:u_result|msg[10][1]              ; Merged with result:u_result|msg[10][0]         ;
+; result:u_result|msg[10][2]              ; Merged with result:u_result|msg[10][0]         ;
+; result:u_result|msg[10][3]              ; Merged with result:u_result|msg[10][0]         ;
+; result:u_result|msg[10][4]              ; Merged with result:u_result|msg[10][0]         ;
+; result:u_result|msg[10][5]              ; Merged with result:u_result|msg[10][0]         ;
+; result:u_result|msg[10][6]              ; Merged with result:u_result|msg[10][0]         ;
+; result:u_result|msg[10][7]              ; Merged with result:u_result|msg[10][0]         ;
+; result:u_result|msg[9][5]               ; Merged with result:u_result|msg[10][0]         ;
+; result:u_result|msg[9][6]               ; Merged with result:u_result|msg[10][0]         ;
+; result:u_result|msg[9][7]               ; Merged with result:u_result|msg[10][0]         ;
+; result:u_result|msg[13][6]              ; Merged with result:u_result|msg[13][5]         ;
+; result:u_result|msg[13][7]              ; Merged with result:u_result|msg[13][5]         ;
+; result:u_result|msg[14][0]              ; Merged with result:u_result|msg[13][5]         ;
+; result:u_result|msg[14][1]              ; Merged with result:u_result|msg[13][5]         ;
+; result:u_result|msg[14][2]              ; Merged with result:u_result|msg[13][5]         ;
+; result:u_result|msg[14][3]              ; Merged with result:u_result|msg[13][5]         ;
+; result:u_result|msg[14][4]              ; Merged with result:u_result|msg[13][5]         ;
+; result:u_result|msg[14][5]              ; Merged with result:u_result|msg[13][5]         ;
+; result:u_result|msg[14][6]              ; Merged with result:u_result|msg[13][5]         ;
+; result:u_result|msg[14][7]              ; Merged with result:u_result|msg[13][5]         ;
+; result:u_result|msg[17][6]              ; Merged with result:u_result|msg[17][5]         ;
+; result:u_result|msg[17][7]              ; Merged with result:u_result|msg[17][5]         ;
+; result:u_result|msg[18][0]              ; Merged with result:u_result|msg[17][5]         ;
+; result:u_result|msg[18][1]              ; Merged with result:u_result|msg[17][5]         ;
+; result:u_result|msg[18][2]              ; Merged with result:u_result|msg[17][5]         ;
+; result:u_result|msg[18][3]              ; Merged with result:u_result|msg[17][5]         ;
+; result:u_result|msg[18][4]              ; Merged with result:u_result|msg[17][5]         ;
+; result:u_result|msg[18][5]              ; Merged with result:u_result|msg[17][5]         ;
+; result:u_result|msg[18][6]              ; Merged with result:u_result|msg[17][5]         ;
+; result:u_result|msg[18][7]              ; Merged with result:u_result|msg[17][5]         ;
+; result:u_result|msg[21][6]              ; Merged with result:u_result|msg[21][5]         ;
+; result:u_result|msg[21][7]              ; Merged with result:u_result|msg[21][5]         ;
+; result:u_result|msg[22][0]              ; Merged with result:u_result|msg[21][5]         ;
+; result:u_result|msg[22][1]              ; Merged with result:u_result|msg[21][5]         ;
+; result:u_result|msg[22][2]              ; Merged with result:u_result|msg[21][5]         ;
+; result:u_result|msg[22][3]              ; Merged with result:u_result|msg[21][5]         ;
+; result:u_result|msg[22][4]              ; Merged with result:u_result|msg[21][5]         ;
+; result:u_result|msg[22][5]              ; Merged with result:u_result|msg[21][5]         ;
+; result:u_result|msg[22][6]              ; Merged with result:u_result|msg[21][5]         ;
+; result:u_result|msg[22][7]              ; Merged with result:u_result|msg[21][5]         ;
+; result:u_result|msg[25][6]              ; Merged with result:u_result|msg[25][5]         ;
+; result:u_result|msg[25][7]              ; Merged with result:u_result|msg[25][5]         ;
+; result:u_result|msg[26][0]              ; Merged with result:u_result|msg[25][5]         ;
+; result:u_result|msg[26][1]              ; Merged with result:u_result|msg[25][5]         ;
+; result:u_result|msg[26][2]              ; Merged with result:u_result|msg[25][5]         ;
+; result:u_result|msg[26][3]              ; Merged with result:u_result|msg[25][5]         ;
+; result:u_result|msg[26][4]              ; Merged with result:u_result|msg[25][5]         ;
+; result:u_result|msg[26][5]              ; Merged with result:u_result|msg[25][5]         ;
+; result:u_result|msg[26][6]              ; Merged with result:u_result|msg[25][5]         ;
+; result:u_result|msg[26][7]              ; Merged with result:u_result|msg[25][5]         ;
+; result:u_result|msg[29][6]              ; Merged with result:u_result|msg[29][5]         ;
+; result:u_result|msg[29][7]              ; Merged with result:u_result|msg[29][5]         ;
+; result:u_result|msg[30][0]              ; Merged with result:u_result|msg[29][5]         ;
+; result:u_result|msg[30][1]              ; Merged with result:u_result|msg[29][5]         ;
+; result:u_result|msg[30][2]              ; Merged with result:u_result|msg[29][5]         ;
+; result:u_result|msg[30][3]              ; Merged with result:u_result|msg[29][5]         ;
+; result:u_result|msg[30][4]              ; Merged with result:u_result|msg[29][5]         ;
+; result:u_result|msg[30][5]              ; Merged with result:u_result|msg[29][5]         ;
+; result:u_result|msg[30][6]              ; Merged with result:u_result|msg[29][5]         ;
+; result:u_result|msg[30][7]              ; Merged with result:u_result|msg[29][5]         ;
+; result:u_result|msg[33][6]              ; Merged with result:u_result|msg[33][5]         ;
+; result:u_result|msg[33][7]              ; Merged with result:u_result|msg[33][5]         ;
+; result:u_result|msg[34][0]              ; Merged with result:u_result|msg[33][5]         ;
+; result:u_result|msg[34][1]              ; Merged with result:u_result|msg[33][5]         ;
+; result:u_result|msg[34][2]              ; Merged with result:u_result|msg[33][5]         ;
+; result:u_result|msg[34][3]              ; Merged with result:u_result|msg[33][5]         ;
+; result:u_result|msg[34][4]              ; Merged with result:u_result|msg[33][5]         ;
+; result:u_result|msg[34][5]              ; Merged with result:u_result|msg[33][5]         ;
+; result:u_result|msg[34][6]              ; Merged with result:u_result|msg[33][5]         ;
+; result:u_result|msg[34][7]              ; Merged with result:u_result|msg[33][5]         ;
+; result:u_result|msg[37][6]              ; Merged with result:u_result|msg[37][5]         ;
+; result:u_result|msg[37][7]              ; Merged with result:u_result|msg[37][5]         ;
+; result:u_result|msg[38][0]              ; Merged with result:u_result|msg[37][5]         ;
+; result:u_result|msg[38][1]              ; Merged with result:u_result|msg[37][5]         ;
+; result:u_result|msg[38][2]              ; Merged with result:u_result|msg[37][5]         ;
+; result:u_result|msg[38][3]              ; Merged with result:u_result|msg[37][5]         ;
+; result:u_result|msg[38][4]              ; Merged with result:u_result|msg[37][5]         ;
+; result:u_result|msg[38][5]              ; Merged with result:u_result|msg[37][5]         ;
+; result:u_result|msg[38][6]              ; Merged with result:u_result|msg[37][5]         ;
+; result:u_result|msg[38][7]              ; Merged with result:u_result|msg[37][5]         ;
+; result:u_result|msg[41][6]              ; Merged with result:u_result|msg[41][5]         ;
+; result:u_result|msg[41][7]              ; Merged with result:u_result|msg[41][5]         ;
+; result:u_result|msg[42][0]              ; Merged with result:u_result|msg[41][5]         ;
+; result:u_result|msg[42][1]              ; Merged with result:u_result|msg[41][5]         ;
+; result:u_result|msg[42][2]              ; Merged with result:u_result|msg[41][5]         ;
+; result:u_result|msg[42][3]              ; Merged with result:u_result|msg[41][5]         ;
+; result:u_result|msg[42][4]              ; Merged with result:u_result|msg[41][5]         ;
+; result:u_result|msg[42][5]              ; Merged with result:u_result|msg[41][5]         ;
+; result:u_result|msg[42][6]              ; Merged with result:u_result|msg[41][5]         ;
+; result:u_result|msg[42][7]              ; Merged with result:u_result|msg[41][5]         ;
+; result:u_result|msg[0][3]               ; Merged with result:u_result|msg[0][1]          ;
+; result:u_result|msg[0][4]               ; Merged with result:u_result|msg[0][1]          ;
+; result:u_result|msg[0][6]               ; Merged with result:u_result|msg[0][1]          ;
+; result:u_result|msg[1][3]               ; Merged with result:u_result|msg[0][1]          ;
+; result:u_result|msg[1][4]               ; Merged with result:u_result|msg[0][1]          ;
+; result:u_result|msg[1][5]               ; Merged with result:u_result|msg[0][1]          ;
+; result:u_result|msg[1][6]               ; Merged with result:u_result|msg[0][1]          ;
+; result:u_result|msg[2][2]               ; Merged with result:u_result|msg[0][1]          ;
+; result:u_result|msg[2][4]               ; Merged with result:u_result|msg[0][1]          ;
+; result:u_result|msg[2][6]               ; Merged with result:u_result|msg[0][1]          ;
+; result:u_result|msg[2][7]               ; Merged with result:u_result|msg[0][1]          ;
+; packet:u_packet|reason[3..7]            ; Merged with packet:u_packet|reason[2]          ;
+; run:u_run|score:u_score|l0[24][17]      ; Merged with run:u_run|score:u_score|l0[24][16] ;
+; run:u_run|score:u_score|l0[24][18]      ; Merged with run:u_run|score:u_score|l0[24][16] ;
+; run:u_run|score:u_score|l0[24][19]      ; Merged with run:u_run|score:u_score|l0[24][16] ;
+; run:u_run|score:u_score|l0[24][20]      ; Merged with run:u_run|score:u_score|l0[24][16] ;
+; run:u_run|score:u_score|l0[24][21]      ; Merged with run:u_run|score:u_score|l0[24][16] ;
+; run:u_run|score:u_score|l0[25][17]      ; Merged with run:u_run|score:u_score|l0[25][16] ;
+; run:u_run|score:u_score|l0[25][18]      ; Merged with run:u_run|score:u_score|l0[25][16] ;
+; run:u_run|score:u_score|l0[25][19]      ; Merged with run:u_run|score:u_score|l0[25][16] ;
+; run:u_run|score:u_score|l0[25][20]      ; Merged with run:u_run|score:u_score|l0[25][16] ;
+; run:u_run|score:u_score|l0[25][21]      ; Merged with run:u_run|score:u_score|l0[25][16] ;
+; run:u_run|score:u_score|l0[26][17]      ; Merged with run:u_run|score:u_score|l0[26][16] ;
+; run:u_run|score:u_score|l0[26][18]      ; Merged with run:u_run|score:u_score|l0[26][16] ;
+; run:u_run|score:u_score|l0[26][19]      ; Merged with run:u_run|score:u_score|l0[26][16] ;
+; run:u_run|score:u_score|l0[26][20]      ; Merged with run:u_run|score:u_score|l0[26][16] ;
+; run:u_run|score:u_score|l0[26][21]      ; Merged with run:u_run|score:u_score|l0[26][16] ;
+; run:u_run|score:u_score|l0[27][17]      ; Merged with run:u_run|score:u_score|l0[27][16] ;
+; run:u_run|score:u_score|l0[27][18]      ; Merged with run:u_run|score:u_score|l0[27][16] ;
+; run:u_run|score:u_score|l0[27][19]      ; Merged with run:u_run|score:u_score|l0[27][16] ;
+; run:u_run|score:u_score|l0[27][20]      ; Merged with run:u_run|score:u_score|l0[27][16] ;
+; run:u_run|score:u_score|l0[27][21]      ; Merged with run:u_run|score:u_score|l0[27][16] ;
+; run:u_run|score:u_score|l0[28][17]      ; Merged with run:u_run|score:u_score|l0[28][16] ;
+; run:u_run|score:u_score|l0[28][18]      ; Merged with run:u_run|score:u_score|l0[28][16] ;
+; run:u_run|score:u_score|l0[28][19]      ; Merged with run:u_run|score:u_score|l0[28][16] ;
+; run:u_run|score:u_score|l0[28][20]      ; Merged with run:u_run|score:u_score|l0[28][16] ;
+; run:u_run|score:u_score|l0[28][21]      ; Merged with run:u_run|score:u_score|l0[28][16] ;
+; run:u_run|score:u_score|l0[29][17]      ; Merged with run:u_run|score:u_score|l0[29][16] ;
+; run:u_run|score:u_score|l0[29][18]      ; Merged with run:u_run|score:u_score|l0[29][16] ;
+; run:u_run|score:u_score|l0[29][19]      ; Merged with run:u_run|score:u_score|l0[29][16] ;
+; run:u_run|score:u_score|l0[29][20]      ; Merged with run:u_run|score:u_score|l0[29][16] ;
+; run:u_run|score:u_score|l0[29][21]      ; Merged with run:u_run|score:u_score|l0[29][16] ;
+; run:u_run|score:u_score|l0[30][17]      ; Merged with run:u_run|score:u_score|l0[30][16] ;
+; run:u_run|score:u_score|l0[30][18]      ; Merged with run:u_run|score:u_score|l0[30][16] ;
+; run:u_run|score:u_score|l0[30][19]      ; Merged with run:u_run|score:u_score|l0[30][16] ;
+; run:u_run|score:u_score|l0[30][20]      ; Merged with run:u_run|score:u_score|l0[30][16] ;
+; run:u_run|score:u_score|l0[30][21]      ; Merged with run:u_run|score:u_score|l0[30][16] ;
+; run:u_run|score:u_score|l0[31][17]      ; Merged with run:u_run|score:u_score|l0[31][16] ;
+; run:u_run|score:u_score|l0[31][18]      ; Merged with run:u_run|score:u_score|l0[31][16] ;
+; run:u_run|score:u_score|l0[31][19]      ; Merged with run:u_run|score:u_score|l0[31][16] ;
+; run:u_run|score:u_score|l0[31][20]      ; Merged with run:u_run|score:u_score|l0[31][16] ;
+; run:u_run|score:u_score|l0[31][21]      ; Merged with run:u_run|score:u_score|l0[31][16] ;
+; run:u_run|score:u_score|l0[16][17]      ; Merged with run:u_run|score:u_score|l0[16][16] ;
+; run:u_run|score:u_score|l0[16][18]      ; Merged with run:u_run|score:u_score|l0[16][16] ;
+; run:u_run|score:u_score|l0[16][19]      ; Merged with run:u_run|score:u_score|l0[16][16] ;
+; run:u_run|score:u_score|l0[16][20]      ; Merged with run:u_run|score:u_score|l0[16][16] ;
+; run:u_run|score:u_score|l0[16][21]      ; Merged with run:u_run|score:u_score|l0[16][16] ;
+; run:u_run|score:u_score|l0[17][17]      ; Merged with run:u_run|score:u_score|l0[17][16] ;
+; run:u_run|score:u_score|l0[17][18]      ; Merged with run:u_run|score:u_score|l0[17][16] ;
+; run:u_run|score:u_score|l0[17][19]      ; Merged with run:u_run|score:u_score|l0[17][16] ;
+; run:u_run|score:u_score|l0[17][20]      ; Merged with run:u_run|score:u_score|l0[17][16] ;
+; run:u_run|score:u_score|l0[17][21]      ; Merged with run:u_run|score:u_score|l0[17][16] ;
+; run:u_run|score:u_score|l0[18][17]      ; Merged with run:u_run|score:u_score|l0[18][16] ;
+; run:u_run|score:u_score|l0[18][18]      ; Merged with run:u_run|score:u_score|l0[18][16] ;
+; run:u_run|score:u_score|l0[18][19]      ; Merged with run:u_run|score:u_score|l0[18][16] ;
+; run:u_run|score:u_score|l0[18][20]      ; Merged with run:u_run|score:u_score|l0[18][16] ;
+; run:u_run|score:u_score|l0[18][21]      ; Merged with run:u_run|score:u_score|l0[18][16] ;
+; run:u_run|score:u_score|l0[19][17]      ; Merged with run:u_run|score:u_score|l0[19][16] ;
+; run:u_run|score:u_score|l0[19][18]      ; Merged with run:u_run|score:u_score|l0[19][16] ;
+; run:u_run|score:u_score|l0[19][19]      ; Merged with run:u_run|score:u_score|l0[19][16] ;
+; run:u_run|score:u_score|l0[19][20]      ; Merged with run:u_run|score:u_score|l0[19][16] ;
+; run:u_run|score:u_score|l0[19][21]      ; Merged with run:u_run|score:u_score|l0[19][16] ;
+; run:u_run|score:u_score|l0[20][17]      ; Merged with run:u_run|score:u_score|l0[20][16] ;
+; run:u_run|score:u_score|l0[20][18]      ; Merged with run:u_run|score:u_score|l0[20][16] ;
+; run:u_run|score:u_score|l0[20][19]      ; Merged with run:u_run|score:u_score|l0[20][16] ;
+; run:u_run|score:u_score|l0[20][20]      ; Merged with run:u_run|score:u_score|l0[20][16] ;
+; run:u_run|score:u_score|l0[20][21]      ; Merged with run:u_run|score:u_score|l0[20][16] ;
+; run:u_run|score:u_score|l0[21][17]      ; Merged with run:u_run|score:u_score|l0[21][16] ;
+; run:u_run|score:u_score|l0[21][18]      ; Merged with run:u_run|score:u_score|l0[21][16] ;
+; run:u_run|score:u_score|l0[21][19]      ; Merged with run:u_run|score:u_score|l0[21][16] ;
+; run:u_run|score:u_score|l0[21][20]      ; Merged with run:u_run|score:u_score|l0[21][16] ;
+; run:u_run|score:u_score|l0[21][21]      ; Merged with run:u_run|score:u_score|l0[21][16] ;
+; run:u_run|score:u_score|l0[22][17]      ; Merged with run:u_run|score:u_score|l0[22][16] ;
+; run:u_run|score:u_score|l0[22][18]      ; Merged with run:u_run|score:u_score|l0[22][16] ;
+; run:u_run|score:u_score|l0[22][19]      ; Merged with run:u_run|score:u_score|l0[22][16] ;
+; run:u_run|score:u_score|l0[22][20]      ; Merged with run:u_run|score:u_score|l0[22][16] ;
+; run:u_run|score:u_score|l0[22][21]      ; Merged with run:u_run|score:u_score|l0[22][16] ;
+; run:u_run|score:u_score|l0[23][17]      ; Merged with run:u_run|score:u_score|l0[23][16] ;
+; run:u_run|score:u_score|l0[23][18]      ; Merged with run:u_run|score:u_score|l0[23][16] ;
+; run:u_run|score:u_score|l0[23][19]      ; Merged with run:u_run|score:u_score|l0[23][16] ;
+; run:u_run|score:u_score|l0[23][20]      ; Merged with run:u_run|score:u_score|l0[23][16] ;
+; run:u_run|score:u_score|l0[23][21]      ; Merged with run:u_run|score:u_score|l0[23][16] ;
+; run:u_run|score:u_score|l0[8][17]       ; Merged with run:u_run|score:u_score|l0[8][16]  ;
+; run:u_run|score:u_score|l0[8][18]       ; Merged with run:u_run|score:u_score|l0[8][16]  ;
+; run:u_run|score:u_score|l0[8][19]       ; Merged with run:u_run|score:u_score|l0[8][16]  ;
+; run:u_run|score:u_score|l0[8][20]       ; Merged with run:u_run|score:u_score|l0[8][16]  ;
+; run:u_run|score:u_score|l0[8][21]       ; Merged with run:u_run|score:u_score|l0[8][16]  ;
+; run:u_run|score:u_score|l0[9][17]       ; Merged with run:u_run|score:u_score|l0[9][16]  ;
+; run:u_run|score:u_score|l0[9][18]       ; Merged with run:u_run|score:u_score|l0[9][16]  ;
+; run:u_run|score:u_score|l0[9][19]       ; Merged with run:u_run|score:u_score|l0[9][16]  ;
+; run:u_run|score:u_score|l0[9][20]       ; Merged with run:u_run|score:u_score|l0[9][16]  ;
+; run:u_run|score:u_score|l0[9][21]       ; Merged with run:u_run|score:u_score|l0[9][16]  ;
+; run:u_run|score:u_score|l0[10][17]      ; Merged with run:u_run|score:u_score|l0[10][16] ;
+; run:u_run|score:u_score|l0[10][18]      ; Merged with run:u_run|score:u_score|l0[10][16] ;
+; run:u_run|score:u_score|l0[10][19]      ; Merged with run:u_run|score:u_score|l0[10][16] ;
+; run:u_run|score:u_score|l0[10][20]      ; Merged with run:u_run|score:u_score|l0[10][16] ;
+; run:u_run|score:u_score|l0[10][21]      ; Merged with run:u_run|score:u_score|l0[10][16] ;
+; run:u_run|score:u_score|l0[11][17]      ; Merged with run:u_run|score:u_score|l0[11][16] ;
+; run:u_run|score:u_score|l0[11][18]      ; Merged with run:u_run|score:u_score|l0[11][16] ;
+; run:u_run|score:u_score|l0[11][19]      ; Merged with run:u_run|score:u_score|l0[11][16] ;
+; run:u_run|score:u_score|l0[11][20]      ; Merged with run:u_run|score:u_score|l0[11][16] ;
+; run:u_run|score:u_score|l0[11][21]      ; Merged with run:u_run|score:u_score|l0[11][16] ;
+; run:u_run|score:u_score|l0[12][17]      ; Merged with run:u_run|score:u_score|l0[12][16] ;
+; run:u_run|score:u_score|l0[12][18]      ; Merged with run:u_run|score:u_score|l0[12][16] ;
+; run:u_run|score:u_score|l0[12][19]      ; Merged with run:u_run|score:u_score|l0[12][16] ;
+; run:u_run|score:u_score|l0[12][20]      ; Merged with run:u_run|score:u_score|l0[12][16] ;
+; run:u_run|score:u_score|l0[12][21]      ; Merged with run:u_run|score:u_score|l0[12][16] ;
+; run:u_run|score:u_score|l0[13][17]      ; Merged with run:u_run|score:u_score|l0[13][16] ;
+; run:u_run|score:u_score|l0[13][18]      ; Merged with run:u_run|score:u_score|l0[13][16] ;
+; run:u_run|score:u_score|l0[13][19]      ; Merged with run:u_run|score:u_score|l0[13][16] ;
+; run:u_run|score:u_score|l0[13][20]      ; Merged with run:u_run|score:u_score|l0[13][16] ;
+; run:u_run|score:u_score|l0[13][21]      ; Merged with run:u_run|score:u_score|l0[13][16] ;
+; run:u_run|score:u_score|l0[14][17]      ; Merged with run:u_run|score:u_score|l0[14][16] ;
+; run:u_run|score:u_score|l0[14][18]      ; Merged with run:u_run|score:u_score|l0[14][16] ;
+; run:u_run|score:u_score|l0[14][19]      ; Merged with run:u_run|score:u_score|l0[14][16] ;
+; run:u_run|score:u_score|l0[14][20]      ; Merged with run:u_run|score:u_score|l0[14][16] ;
+; run:u_run|score:u_score|l0[14][21]      ; Merged with run:u_run|score:u_score|l0[14][16] ;
+; run:u_run|score:u_score|l0[15][17]      ; Merged with run:u_run|score:u_score|l0[15][16] ;
+; run:u_run|score:u_score|l0[15][18]      ; Merged with run:u_run|score:u_score|l0[15][16] ;
+; run:u_run|score:u_score|l0[15][19]      ; Merged with run:u_run|score:u_score|l0[15][16] ;
+; run:u_run|score:u_score|l0[15][20]      ; Merged with run:u_run|score:u_score|l0[15][16] ;
+; run:u_run|score:u_score|l0[15][21]      ; Merged with run:u_run|score:u_score|l0[15][16] ;
+; run:u_run|score:u_score|l0[0][17]       ; Merged with run:u_run|score:u_score|l0[0][16]  ;
+; run:u_run|score:u_score|l0[0][18]       ; Merged with run:u_run|score:u_score|l0[0][16]  ;
+; run:u_run|score:u_score|l0[0][19]       ; Merged with run:u_run|score:u_score|l0[0][16]  ;
+; run:u_run|score:u_score|l0[0][20]       ; Merged with run:u_run|score:u_score|l0[0][16]  ;
+; run:u_run|score:u_score|l0[0][21]       ; Merged with run:u_run|score:u_score|l0[0][16]  ;
+; run:u_run|score:u_score|l0[1][17]       ; Merged with run:u_run|score:u_score|l0[1][16]  ;
+; run:u_run|score:u_score|l0[1][18]       ; Merged with run:u_run|score:u_score|l0[1][16]  ;
+; run:u_run|score:u_score|l0[1][19]       ; Merged with run:u_run|score:u_score|l0[1][16]  ;
+; run:u_run|score:u_score|l0[1][20]       ; Merged with run:u_run|score:u_score|l0[1][16]  ;
+; run:u_run|score:u_score|l0[1][21]       ; Merged with run:u_run|score:u_score|l0[1][16]  ;
+; run:u_run|score:u_score|l0[2][17]       ; Merged with run:u_run|score:u_score|l0[2][16]  ;
+; run:u_run|score:u_score|l0[2][18]       ; Merged with run:u_run|score:u_score|l0[2][16]  ;
+; run:u_run|score:u_score|l0[2][19]       ; Merged with run:u_run|score:u_score|l0[2][16]  ;
+; run:u_run|score:u_score|l0[2][20]       ; Merged with run:u_run|score:u_score|l0[2][16]  ;
+; run:u_run|score:u_score|l0[2][21]       ; Merged with run:u_run|score:u_score|l0[2][16]  ;
+; run:u_run|score:u_score|l0[3][17]       ; Merged with run:u_run|score:u_score|l0[3][16]  ;
+; run:u_run|score:u_score|l0[3][18]       ; Merged with run:u_run|score:u_score|l0[3][16]  ;
+; run:u_run|score:u_score|l0[3][19]       ; Merged with run:u_run|score:u_score|l0[3][16]  ;
+; run:u_run|score:u_score|l0[3][20]       ; Merged with run:u_run|score:u_score|l0[3][16]  ;
+; run:u_run|score:u_score|l0[3][21]       ; Merged with run:u_run|score:u_score|l0[3][16]  ;
+; run:u_run|score:u_score|l0[4][17]       ; Merged with run:u_run|score:u_score|l0[4][16]  ;
+; run:u_run|score:u_score|l0[4][18]       ; Merged with run:u_run|score:u_score|l0[4][16]  ;
+; run:u_run|score:u_score|l0[4][19]       ; Merged with run:u_run|score:u_score|l0[4][16]  ;
+; run:u_run|score:u_score|l0[4][20]       ; Merged with run:u_run|score:u_score|l0[4][16]  ;
+; run:u_run|score:u_score|l0[4][21]       ; Merged with run:u_run|score:u_score|l0[4][16]  ;
+; run:u_run|score:u_score|l0[5][17]       ; Merged with run:u_run|score:u_score|l0[5][16]  ;
+; run:u_run|score:u_score|l0[5][18]       ; Merged with run:u_run|score:u_score|l0[5][16]  ;
+; run:u_run|score:u_score|l0[5][19]       ; Merged with run:u_run|score:u_score|l0[5][16]  ;
+; run:u_run|score:u_score|l0[5][20]       ; Merged with run:u_run|score:u_score|l0[5][16]  ;
+; run:u_run|score:u_score|l0[5][21]       ; Merged with run:u_run|score:u_score|l0[5][16]  ;
+; run:u_run|score:u_score|l0[6][17]       ; Merged with run:u_run|score:u_score|l0[6][16]  ;
+; run:u_run|score:u_score|l0[6][18]       ; Merged with run:u_run|score:u_score|l0[6][16]  ;
+; run:u_run|score:u_score|l0[6][19]       ; Merged with run:u_run|score:u_score|l0[6][16]  ;
+; run:u_run|score:u_score|l0[6][20]       ; Merged with run:u_run|score:u_score|l0[6][16]  ;
+; run:u_run|score:u_score|l0[6][21]       ; Merged with run:u_run|score:u_score|l0[6][16]  ;
+; run:u_run|score:u_score|l0[7][17]       ; Merged with run:u_run|score:u_score|l0[7][16]  ;
+; run:u_run|score:u_score|l0[7][18]       ; Merged with run:u_run|score:u_score|l0[7][16]  ;
+; run:u_run|score:u_score|l0[7][19]       ; Merged with run:u_run|score:u_score|l0[7][16]  ;
+; run:u_run|score:u_score|l0[7][20]       ; Merged with run:u_run|score:u_score|l0[7][16]  ;
+; run:u_run|score:u_score|l0[7][21]       ; Merged with run:u_run|score:u_score|l0[7][16]  ;
+; result:u_result|msg[0][1]               ; Stuck at GND due to stuck port data_in         ;
+; result:u_result|last_idx[1]             ; Stuck at GND due to stuck port data_in         ;
+; result:u_result|msg[0][0]               ; Stuck at VCC due to stuck port data_in         ;
+; packet:u_packet|reason[2]               ; Stuck at GND due to stuck port data_in         ;
+; result:u_result|uart_tx:u_tx|state~6    ; Lost fanout                                    ;
+; result:u_result|uart_tx:u_tx|state~7    ; Lost fanout                                    ;
+; uart_rx:u_rx|state~6                    ; Lost fanout                                    ;
+; uart_rx:u_rx|state~7                    ; Lost fanout                                    ;
+; result:u_result|state~7                 ; Lost fanout                                    ;
+; result:u_result|state~8                 ; Lost fanout                                    ;
+; packet:u_packet|state~7                 ; Lost fanout                                    ;
+; packet:u_packet|state~8                 ; Lost fanout                                    ;
+; run:u_run|state~6                       ; Lost fanout                                    ;
+; run:u_run|state~7                       ; Lost fanout                                    ;
+; Total Number of Removed Registers = 315 ;                                                ;
++-----------------------------------------+------------------------------------------------+
+
+
++------------------------------------------------------------------------------------------------------+
+; Removed Registers Triggering Further Register Optimizations                                          ;
++---------------------------------+---------------------------+----------------------------------------+
+; Register name                   ; Reason for Removal        ; Registers Removed due to This Register ;
++---------------------------------+---------------------------+----------------------------------------+
+; winning_digit:u_winner|digit[7] ; Stuck at GND              ; result:u_result|msg[43][7]             ;
+;                                 ; due to stuck port data_in ;                                        ;
+; winning_digit:u_winner|digit[6] ; Stuck at GND              ; result:u_result|msg[43][6]             ;
+;                                 ; due to stuck port data_in ;                                        ;
+; winning_digit:u_winner|digit[5] ; Stuck at GND              ; result:u_result|msg[43][5]             ;
+;                                 ; due to stuck port data_in ;                                        ;
+; winning_digit:u_winner|digit[4] ; Stuck at GND              ; result:u_result|msg[43][4]             ;
+;                                 ; due to stuck port data_in ;                                        ;
++---------------------------------+---------------------------+----------------------------------------+
+
+
++------------------------------------------------------+
+; General Register Statistics                          ;
++----------------------------------------------+-------+
+; Statistic                                    ; Value ;
++----------------------------------------------+-------+
+; Total registers                              ; 10049 ;
+; Number of registers using Synchronous Clear  ; 6252  ;
+; Number of registers using Synchronous Load   ; 9     ;
+; Number of registers using Asynchronous Clear ; 0     ;
+; Number of registers using Asynchronous Load  ; 0     ;
+; Number of registers using Clock Enable       ; 9913  ;
+; Number of registers using Preset             ; 0     ;
++----------------------------------------------+-------+
+
+
++------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+; Multiplexer Restructuring Statistics (Restructuring Performed)                                                                                                   ;
++--------------------+-----------+---------------+----------------------+------------------------+------------+----------------------------------------------------+
+; Multiplexer Inputs ; Bus Width ; Baseline Area ; Area if Restructured ; Saving if Restructured ; Registered ; Example Multiplexer Output                         ;
++--------------------+-----------+---------------+----------------------+------------------------+------------+----------------------------------------------------+
+; 3:1                ; 512 bits  ; 1024 LEs      ; 0 LEs                ; 1024 LEs               ; Yes        ; |synapse_top|weights:u_weights|w[0][63][1]         ;
+; 3:1                ; 512 bits  ; 1024 LEs      ; 0 LEs                ; 1024 LEs               ; Yes        ; |synapse_top|weights:u_weights|w[1][63][0]         ;
+; 3:1                ; 512 bits  ; 1024 LEs      ; 0 LEs                ; 1024 LEs               ; Yes        ; |synapse_top|weights:u_weights|w[2][32][7]         ;
+; 3:1                ; 512 bits  ; 1024 LEs      ; 0 LEs                ; 1024 LEs               ; Yes        ; |synapse_top|weights:u_weights|w[3][31][0]         ;
+; 3:1                ; 512 bits  ; 1024 LEs      ; 0 LEs                ; 1024 LEs               ; Yes        ; |synapse_top|weights:u_weights|w[4][63][0]         ;
+; 3:1                ; 512 bits  ; 1024 LEs      ; 0 LEs                ; 1024 LEs               ; Yes        ; |synapse_top|weights:u_weights|w[5][0][7]          ;
+; 3:1                ; 512 bits  ; 1024 LEs      ; 0 LEs                ; 1024 LEs               ; Yes        ; |synapse_top|weights:u_weights|w[6][15][1]         ;
+; 3:1                ; 512 bits  ; 1024 LEs      ; 0 LEs                ; 1024 LEs               ; Yes        ; |synapse_top|weights:u_weights|w[7][32][7]         ;
+; 3:1                ; 512 bits  ; 1024 LEs      ; 0 LEs                ; 1024 LEs               ; Yes        ; |synapse_top|weights:u_weights|w[8][47][0]         ;
+; 3:1                ; 512 bits  ; 1024 LEs      ; 0 LEs                ; 1024 LEs               ; Yes        ; |synapse_top|weights:u_weights|w[9][47][1]         ;
+; 16:1               ; 512 bits  ; 5120 LEs      ; 3072 LEs             ; 2048 LEs               ; Yes        ; |synapse_top|run:u_run|score:u_score|w_q[63][0]    ;
+; 3:1                ; 512 bits  ; 1024 LEs      ; 0 LEs                ; 1024 LEs               ; Yes        ; |synapse_top|frame:u_frame|x[63][0]                ;
+; 3:1                ; 8 bits    ; 16 LEs        ; 0 LEs                ; 16 LEs                 ; Yes        ; |synapse_top|uart_rx:u_rx|data[2]                  ;
+; 6:1                ; 7 bits    ; 28 LEs        ; 14 LEs               ; 14 LEs                 ; Yes        ; |synapse_top|result:u_result|uart_tx:u_tx|shift[6] ;
+; 6:1                ; 9 bits    ; 36 LEs        ; 0 LEs                ; 36 LEs                 ; Yes        ; |synapse_top|uart_rx:u_rx|clk_count[8]             ;
+; 3:1                ; 3 bits    ; 6 LEs         ; 6 LEs                ; 0 LEs                  ; No         ; |synapse_top|result:u_result|uart_tx:u_tx|bit_idx  ;
+; 3:1                ; 3 bits    ; 6 LEs         ; 6 LEs                ; 0 LEs                  ; No         ; |synapse_top|uart_rx:u_rx|bit_idx                  ;
+; 7:1                ; 2 bits    ; 8 LEs         ; 6 LEs                ; 2 LEs                  ; No         ; |synapse_top|result:u_result|uart_tx:u_tx|state    ;
+; 9:1                ; 2 bits    ; 12 LEs        ; 6 LEs                ; 6 LEs                  ; No         ; |synapse_top|result:u_result|uart_tx:u_tx|state    ;
+; 4:1                ; 3 bits    ; 6 LEs         ; 6 LEs                ; 0 LEs                  ; Yes        ; |synapse_top|result:u_result|msg[0][0]             ;
+; 4:1                ; 16 bits   ; 32 LEs        ; 32 LEs               ; 0 LEs                  ; Yes        ; |synapse_top|result:u_result|msg[3][1]             ;
+; 4:1                ; 2 bits    ; 4 LEs         ; 4 LEs                ; 0 LEs                  ; Yes        ; |synapse_top|result:u_result|msg[1][2]             ;
+; 6:1                ; 2 bits    ; 8 LEs         ; 4 LEs                ; 4 LEs                  ; Yes        ; |synapse_top|result:u_result|last_idx[2]           ;
+; 6:1                ; 8 bits    ; 32 LEs        ; 0 LEs                ; 32 LEs                 ; Yes        ; |synapse_top|packet:u_packet|len_payload[6]        ;
+; 8:1                ; 8 bits    ; 40 LEs        ; 0 LEs                ; 40 LEs                 ; Yes        ; |synapse_top|packet:u_packet|running_xor[3]        ;
+; 8:1                ; 6 bits    ; 30 LEs        ; 18 LEs               ; 12 LEs                 ; Yes        ; |synapse_top|result:u_result|byte_idx[5]           ;
+; 9:1                ; 3 bits    ; 18 LEs        ; 6 LEs                ; 12 LEs                 ; Yes        ; |synapse_top|packet:u_packet|reason[0]             ;
+; 4:1                ; 2 bits    ; 4 LEs         ; 4 LEs                ; 0 LEs                  ; No         ; |synapse_top|result:u_result|Mux7                  ;
+; 10:1               ; 2 bits    ; 12 LEs        ; 10 LEs               ; 2 LEs                  ; No         ; |synapse_top|result:u_result|state                 ;
+; 11:1               ; 2 bits    ; 14 LEs        ; 8 LEs                ; 6 LEs                  ; No         ; |synapse_top|result:u_result|state                 ;
+; 6:1                ; 4 bits    ; 16 LEs        ; 8 LEs                ; 8 LEs                  ; Yes        ; |synapse_top|run:u_run|digit[3]                    ;
+; 7:1                ; 2 bits    ; 8 LEs         ; 6 LEs                ; 2 LEs                  ; No         ; |synapse_top|run:u_run|state                       ;
++--------------------+-----------+---------------+----------------------+------------------------+------------+----------------------------------------------------+
+
+
++-----------------------------------------------------------------------------+
+; Parameter Settings for User Entity Instance: Top-level Entity: |synapse_top ;
++----------------+-------+----------------------------------------------------+
+; Parameter Name ; Value ; Type                                               ;
++----------------+-------+----------------------------------------------------+
+; CLKS_PER_BIT   ; 434   ; Signed Integer                                     ;
++----------------+-------+----------------------------------------------------+
+Note: In order to hide this table in the UI and the text report file, please set the "Show Parameter Settings in Synthesis Report" option in "Analysis and Synthesis Settings -> More Settings" to "Off".
+
+
++-----------------------------------------------------------+
+; Parameter Settings for User Entity Instance: uart_rx:u_rx ;
++----------------+-------+----------------------------------+
+; Parameter Name ; Value ; Type                             ;
++----------------+-------+----------------------------------+
+; CLKS_PER_BIT   ; 434   ; Signed Integer                   ;
++----------------+-------+----------------------------------+
+Note: In order to hide this table in the UI and the text report file, please set the "Show Parameter Settings in Synthesis Report" option in "Analysis and Synthesis Settings -> More Settings" to "Off".
+
+
++--------------------------------------------------------------+
+; Parameter Settings for User Entity Instance: result:u_result ;
++----------------+-------+-------------------------------------+
+; Parameter Name ; Value ; Type                                ;
++----------------+-------+-------------------------------------+
+; CLKS_PER_BIT   ; 434   ; Signed Integer                      ;
++----------------+-------+-------------------------------------+
+Note: In order to hide this table in the UI and the text report file, please set the "Show Parameter Settings in Synthesis Report" option in "Analysis and Synthesis Settings -> More Settings" to "Off".
+
+
++---------------------------------------------------------------------------+
+; Parameter Settings for User Entity Instance: result:u_result|uart_tx:u_tx ;
++----------------+-------+--------------------------------------------------+
+; Parameter Name ; Value ; Type                                             ;
++----------------+-------+--------------------------------------------------+
+; CLKS_PER_BIT   ; 434   ; Signed Integer                                   ;
++----------------+-------+--------------------------------------------------+
+Note: In order to hide this table in the UI and the text report file, please set the "Show Parameter Settings in Synthesis Report" option in "Analysis and Synthesis Settings -> More Settings" to "Off".
+
+
++------------------------------------------------------------------------------------------------------------------+
+; Port Connectivity Checks: "packet:u_packet"                                                                      ;
++--------+--------+----------+-------------------------------------------------------------------------------------+
+; Port   ; Type   ; Severity ; Details                                                                             ;
++--------+--------+----------+-------------------------------------------------------------------------------------+
+; length ; Output ; Info     ; Connected to dangling logic. Logic that only feeds a dangling port will be removed. ;
++--------+--------+----------+-------------------------------------------------------------------------------------+
+
+
++-----------------------------------------------------+
+; Post-Synthesis Netlist Statistics for Top Partition ;
++-----------------------+-----------------------------+
+; Type                  ; Count                       ;
++-----------------------+-----------------------------+
+; arriav_ff             ; 10049                       ;
+;     ENA               ; 3737                        ;
+;     ENA SCLR          ; 6168                        ;
+;     ENA SCLR SLD      ; 8                           ;
+;     SCLR              ; 76                          ;
+;     SLD               ; 1                           ;
+;     plain             ; 59                          ;
+; arriav_lcell_comb     ; 3761                        ;
+;     arith             ; 1189                        ;
+;         0 data inputs ; 1                           ;
+;         1 data inputs ; 26                          ;
+;         2 data inputs ; 1162                        ;
+;     extend            ; 39                          ;
+;         7 data inputs ; 39                          ;
+;     normal            ; 2533                        ;
+;         1 data inputs ; 1                           ;
+;         2 data inputs ; 105                         ;
+;         3 data inputs ; 71                          ;
+;         4 data inputs ; 118                         ;
+;         5 data inputs ; 200                         ;
+;         6 data inputs ; 2038                        ;
+; arriav_mac            ; 64                          ;
+; boundary_port         ; 4                           ;
+;                       ;                             ;
+; Max LUT depth         ; 16.00                       ;
+; Average LUT depth     ; 2.18                        ;
++-----------------------+-----------------------------+
+
+
++-------------------------------+
+; Elapsed Time Per Partition    ;
++----------------+--------------+
+; Partition Name ; Elapsed Time ;
++----------------+--------------+
+; Top            ; 00:00:12     ;
++----------------+--------------+
+
+
++-------------------------------+
+; Analysis & Synthesis Messages ;
++-------------------------------+
+Info: *******************************************************************
+Info: Running Quartus Prime Analysis & Synthesis
+    Info: Version 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+    Info: Processing started: Sat Oct 24 16:59:38 2026
+Info: Command: quartus_map --read_settings_files=on --write_settings_files=off Synapse -c synapse_top
+Warning (18236): Number of processors has not been specified which may cause overloading on shared machines.  Set the global assignment NUM_PARALLEL_PROCESSORS in your QSF to an appropriate value for best performance.
+Info (20030): Parallel compilation is enabled and will use 14 of the 14 processors detected
+Info (12021): Found 1 design units, including 1 entities, in source file winning_digit.sv
+    Info (12023): Found entity 1: winning_digit File: C:/synapse/Synapse/rtl/winning_digit.sv Line: 1
+Info (12021): Found 1 design units, including 1 entities, in source file weights.sv
+    Info (12023): Found entity 1: weights File: C:/synapse/Synapse/rtl/weights.sv Line: 1
+Info (12021): Found 1 design units, including 1 entities, in source file uart_tx.sv
+    Info (12023): Found entity 1: uart_tx File: C:/synapse/Synapse/rtl/uart_tx.sv Line: 1
+Info (12021): Found 1 design units, including 1 entities, in source file uart_rx.sv
+    Info (12023): Found entity 1: uart_rx File: C:/synapse/Synapse/rtl/uart_rx.sv Line: 1
+Info (12021): Found 1 design units, including 1 entities, in source file score.sv
+    Info (12023): Found entity 1: score File: C:/synapse/Synapse/rtl/score.sv Line: 1
+Info (12021): Found 1 design units, including 1 entities, in source file run.sv
+    Info (12023): Found entity 1: run File: C:/synapse/Synapse/rtl/run.sv Line: 1
+Info (12021): Found 1 design units, including 1 entities, in source file result.sv
+    Info (12023): Found entity 1: result File: C:/synapse/Synapse/rtl/result.sv Line: 1
+Info (12021): Found 1 design units, including 1 entities, in source file packet.sv
+    Info (12023): Found entity 1: packet File: C:/synapse/Synapse/rtl/packet.sv Line: 6
+Info (12021): Found 1 design units, including 1 entities, in source file frame.sv
+    Info (12023): Found entity 1: frame File: C:/synapse/Synapse/rtl/frame.sv Line: 1
+Info (12021): Found 1 design units, including 1 entities, in source file synapse_top.sv
+    Info (12023): Found entity 1: synapse_top File: C:/synapse/Synapse/rtl/synapse_top.sv Line: 4
+Info (12127): Elaborating entity "synapse_top" for the top level hierarchy
+Info (10008): Verilog HDL or VHDL information: EDA Netlist Writer cannot regroup multidimensional array "w" into its bus
+Info (12128): Elaborating entity "uart_rx" for hierarchy "uart_rx:u_rx" File: C:/synapse/Synapse/rtl/synapse_top.sv Line: 33
+Info (12128): Elaborating entity "packet" for hierarchy "packet:u_packet" File: C:/synapse/Synapse/rtl/synapse_top.sv Line: 46
+Warning (10230): Verilog HDL assignment warning at packet.sv(79): truncated value with size 32 to match size of target (8) File: C:/synapse/Synapse/rtl/packet.sv Line: 79
+Info (12128): Elaborating entity "frame" for hierarchy "frame:u_frame" File: C:/synapse/Synapse/rtl/synapse_top.sv Line: 55
+Info (12128): Elaborating entity "weights" for hierarchy "weights:u_weights" File: C:/synapse/Synapse/rtl/synapse_top.sv Line: 64
+Info (10008): Verilog HDL or VHDL information: EDA Netlist Writer cannot regroup multidimensional array "w" into its bus
+Info (10008): Verilog HDL or VHDL information: EDA Netlist Writer cannot regroup multidimensional array "w" into its bus
+Info (12128): Elaborating entity "run" for hierarchy "run:u_run" File: C:/synapse/Synapse/rtl/synapse_top.sv Line: 75
+Info (10008): Verilog HDL or VHDL information: EDA Netlist Writer cannot regroup multidimensional array "w" into its bus
+Info (10008): Verilog HDL or VHDL information: EDA Netlist Writer cannot regroup multidimensional array "w" into its bus
+Info (12128): Elaborating entity "score" for hierarchy "run:u_run|score:u_score" File: C:/synapse/Synapse/rtl/run.sv Line: 44
+Info (12128): Elaborating entity "winning_digit" for hierarchy "winning_digit:u_winner" File: C:/synapse/Synapse/rtl/synapse_top.sv Line: 83
+Info (12128): Elaborating entity "result" for hierarchy "result:u_result" File: C:/synapse/Synapse/rtl/synapse_top.sv Line: 96
+Info (12128): Elaborating entity "uart_tx" for hierarchy "result:u_result|uart_tx:u_tx" File: C:/synapse/Synapse/rtl/result.sv Line: 41
+Info (286030): Timing-Driven Synthesis is running
+Info (17049): 10 registers lost all their fanouts during netlist optimizations.
+Info (144001): Generated suppressed messages file C:/synapse/Synapse/rtl/output_files/synapse_top.map.smsg
+Info (16010): Generating hard_block partition "hard_block:auto_generated_inst"
+    Info (16011): Adding 0 node(s), including 0 DDIO, 0 PLL, 0 transceiver and 0 LCELL
+Info (21057): Implemented 12067 device resources after synthesis - the final resource count might be different
+    Info (21058): Implemented 3 input pins
+    Info (21059): Implemented 1 output pins
+    Info (21061): Implemented 11999 logic cells
+    Info (21062): Implemented 64 DSP elements
+Info: Quartus Prime Analysis & Synthesis was successful. 0 errors, 2 warnings
+    Info: Peak virtual memory: 5077 megabytes
+    Info: Processing ended: Sat Oct 24 16:59:58 2026
+    Info: Elapsed time: 00:00:20
+    Info: Total CPU time (on all processors): 00:00:58
+
+
++------------------------------------------+
+; Analysis & Synthesis Suppressed Messages ;
++------------------------------------------+
+The suppressed messages can be found in C:/synapse/Synapse/rtl/output_files/synapse_top.map.smsg.
+
+
