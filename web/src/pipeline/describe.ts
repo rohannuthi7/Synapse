@@ -1,3 +1,4 @@
+import { formatScore, tiedWith } from './network'
 import { PIPELINE_STAGES } from './stages'
 import type { StageKey } from './stages'
 import type { FunctionRef, Shape, Stage, StageMetaByKey, ValueRange } from './types'
@@ -53,6 +54,19 @@ export function frameSize({ data_bytes }: StageMetaByKey['frame']): number {
 export const FRAME_HEAD_BYTES = 3
 export const FRAME_CHECKSUM_BYTES = 1
 
+/** Bytes in the RESULT packet: head, ten int32 scores, digit, flags, checksum. */
+export const RESULT_BYTES = 46
+
+/** "FPGA · COM5" or "Emulated": who answered, in the words the readout uses. */
+export function boardName({ source, port }: StageMetaByKey['result']): string {
+  return source === 'fpga' ? (port ? `FPGA · ${port}` : 'FPGA') : 'Emulated'
+}
+
+/** e.g. "10.7 ms": wire times are short enough that a decimal matters. */
+export function formatWireMs(ms: number): string {
+  return `${ms.toFixed(1)} ms`
+}
+
 /** Shown above the crop box while it is drawn. */
 export function cropBoxLabel({ box }: StageMetaByKey['crop']): string {
   return `ink box · ${box.width} × ${box.height}`
@@ -67,6 +81,8 @@ export function stageNote(stage: Stage): string | null {
       return stage.changed ? null : 'none found'
     case 'polarity':
       return stage.changed ? 'inverted' : null
+    case 'result':
+      return `→ ${stage.meta.digit}`
     default:
       return null
   }
@@ -109,6 +125,13 @@ export function stageStatus(stage: Stage): string {
       return 'Stretching the 64 values so they use the full range.'
     case 'frame':
       return 'Packing the 64 values into a frame for the chip.'
+    case 'result': {
+      const { source, scores, digit } = stage.meta
+      const who = source === 'fpga' ? 'The FPGA' : 'The emulator'
+      const tied = tiedWith(scores, digit)
+      const tie = tied.length ? ` (tied with ${tied.join(', ')})` : ''
+      return `${who} scored all ten digits and predicted ${digit}${tie}.`
+    }
     default: {
       const _exhaustive: never = stage
       return _exhaustive
@@ -133,6 +156,8 @@ const METHODS: Record<StageKey, string> = {
   contrast: 'Rescales the 64 values so the darkest becomes 0 and the brightest 255.',
   frame:
     'Wraps the 64 bytes in a sync byte, the FRAME opcode and a length, then an XOR checksum, the packet `rtl/packet.sv` parses.',
+  result:
+    'Each digit multiplies the 64 brightness bytes by its 64 signed weights and sums them in `rtl/score.sv`; the largest sum wins in `rtl/winning_digit.sv`.',
 }
 
 export function stageMethod(key: StageKey): string {
@@ -228,6 +253,20 @@ export function stageMetaRows(stage: Stage): MetaRow[] {
         { label: 'Data', value: `${data_bytes} bytes` },
         { label: 'Sync, opcode, length', value: formatHex([sync, opcode, length]) },
         { label: 'Checksum (XOR)', value: formatHex([checksum]) },
+      ]
+    }
+    case 'result': {
+      const { scores, digit, weights_sent, wire_ms } = stage.meta
+      return [
+        { label: 'Source', value: boardName(stage.meta) },
+        { label: 'Top score', value: formatScore(scores[digit]) },
+        {
+          label: 'Round trip',
+          value: weights_sent
+            ? `${formatDuration(stage.duration_ms)} · weights reloaded`
+            : formatDuration(stage.duration_ms),
+        },
+        { label: 'Wire time', value: formatWireMs(wire_ms) },
       ]
     }
     default: {

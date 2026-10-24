@@ -1,4 +1,6 @@
+import { dot, tiedWith } from '../network'
 import type { FunctionRef, PipelineRun } from '../types'
+import { FIXTURE_WEIGHTS } from './weights'
 
 // Stand-in for the backend's stage list until it returns one (step 8). Every
 // number is copied from the Playback prototype so the page can be built and
@@ -60,6 +62,20 @@ const SYNC = 0xa5
 const FRAME_OPCODE = 0x02
 const PACKET_HEAD = [SYNC, FRAME_OPCODE, STRETCHED.length]
 const CHECKSUM = [...PACKET_HEAD, ...STRETCHED].reduce((xor, byte) => xor ^ byte, 0)
+
+// The board's answer, scored the way rtl/score.sv does: 64 brightness bytes
+// times each digit's 64 weights. Lowest digit wins a tie, as in
+// rtl/winning_digit.sv.
+const SCORES = FIXTURE_WEIGHTS.map((row) => dot(toRows(STRETCHED), row))
+const WINNER = SCORES.indexOf(Math.max(...SCORES))
+const TIE = tiedWith(SCORES, WINNER).length > 0
+
+// The RESULT packet rtl/result.sv sends: sync, opcode 0x83, length 42, ten
+// little-endian int32 scores, the digit, the flags, then the XOR checksum.
+const int32le = (n: number) => [0, 8, 16, 24].map((shift) => (n >> shift) & 0xff)
+const RESULT_HEAD = [SYNC, 0x83, 42]
+const RESULT_BODY = [...SCORES.flatMap(int32le), WINNER, TIE ? 1 : 0]
+const RESULT_CHECKSUM = [...RESULT_HEAD, ...RESULT_BODY].reduce((xor, byte) => xor ^ byte, 0)
 
 const fn = (file: string, name: string, params: string[], planned?: boolean): FunctionRef => ({
   file,
@@ -161,7 +177,7 @@ export const PLAYBACK_FIXTURE: PipelineRun = {
       key: 'frame',
       duration_ms: 1,
       changed: true,
-      function: fn('encoder.py', 'encode_frame', ['grid'], true),
+      function: fn('services/encoder.py', 'encode_frame', ['grid']),
       meta: {
         sync: SYNC,
         opcode: FRAME_OPCODE,
@@ -171,6 +187,25 @@ export const PLAYBACK_FIXTURE: PipelineRun = {
       },
       grid: toRows(STRETCHED),
       bytes: [...PACKET_HEAD, ...STRETCHED, CHECKSUM],
+    },
+    {
+      key: 'result',
+      duration_ms: 14,
+      changed: true,
+      function: fn('services/board.py', 'run', ['grid']),
+      meta: {
+        source: 'fpga',
+        port: 'COM5',
+        scores: SCORES,
+        digit: WINNER,
+        tie: TIE,
+        weights: FIXTURE_WEIGHTS,
+        weights_source: "scripts/make_weights.py: placeholder templates from Pillow's built-in font",
+        weights_sent: false,
+        // FRAME 68 + ACK 5 + RUN 4 + RESULT 46 bytes at 86.8 us each.
+        wire_ms: 10.677,
+      },
+      bytes: [...RESULT_HEAD, ...RESULT_BODY, RESULT_CHECKSUM],
     },
   ],
 }

@@ -2,6 +2,7 @@ import uuid
 from time import perf_counter
 
 from fastapi import APIRouter, UploadFile
+from starlette.concurrency import run_in_threadpool
 
 from app.schemas import ErrorResponse, InferenceResponse, UploadInfo
 from app.services.pipeline import function_ref, run_pipeline
@@ -23,7 +24,10 @@ async def create_inference(image: UploadFile) -> InferenceResponse:
     data = await image.read()
     received_ms = (perf_counter() - start) * 1000
 
-    result = run_pipeline(
+    # The board stage blocks on the serial port; a worker thread keeps the
+    # event loop free for other requests meanwhile.
+    result = await run_in_threadpool(
+        run_pipeline,
         data,
         filename=image.filename,
         declared_mime=image.content_type,

@@ -1,0 +1,220 @@
+@use '@carbon/styles/scss/theme' as *;
+@use '@carbon/styles/scss/motion' as *;
+@use '@carbon/styles/scss/spacing' as *;
+@use '@carbon/styles/scss/type' as *;
+
+$easing: motion(standard, productive);
+$entrance: motion(entrance, expressive);
+$speed: var(--playback-speed, 1);
+$slow: calc(#{$duration-slow-01} / #{$speed});
+
+// Covers the square, like the frame's hex dump, so the zoomed photo and the
+// grid underneath never show through.
+.view {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: $spacing-06;
+  box-sizing: border-box;
+  padding: $spacing-06;
+  background: $layer-01;
+  container-type: inline-size;
+
+  @container (max-width: 26rem) {
+    gap: $spacing-04;
+    padding: $spacing-04;
+  }
+}
+
+.heading {
+  @include type-style('label-01');
+  color: $text-secondary;
+
+  &[data-align='end'] {
+    text-align: end;
+  }
+}
+
+// Input, prediction and the dot-product line, top to bottom.
+.input {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-03;
+  min-inline-size: 0;
+}
+
+// PixelGrid fills its parent, so this box sets its size.
+.inputGrid {
+  position: relative;
+  inline-size: 100%;
+  aspect-ratio: 1 / 1;
+}
+
+.prediction {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-block-start: $spacing-05;
+}
+
+.digit {
+  @include font-family('sans');
+  font-size: clamp(3rem, 18cqi, 6rem);
+  font-weight: 300;
+  line-height: 1;
+  color: $text-primary;
+  opacity: 0;
+  transform: translateY($spacing-03);
+  transition:
+    opacity $slow $entrance,
+    transform $slow $entrance;
+
+  .view[data-phase='3'] & {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.tie {
+  @include type-style('label-01');
+  margin-block-start: $spacing-02;
+  padding: 0 $spacing-02;
+  border: 1px solid $border-strong-01;
+  color: $text-secondary;
+}
+
+// Fixed to one line so the column never changes height as the text does.
+.sum {
+  @include type-style('code-01');
+  margin-block-start: auto;
+  overflow: hidden;
+  color: $text-helper;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// One header row, then ten digit rows sharing the space; each row is a
+// subgrid so labels, maps, bars and scores line up as columns.
+.rows {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  grid-template-rows: auto repeat(10, minmax(0, 1fr));
+  column-gap: $spacing-03;
+  min-inline-size: 0;
+
+  > .heading:first-child {
+    grid-column: 1 / 4;
+  }
+}
+
+.row {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: center;
+  min-block-size: 0;
+  padding-block: 2px;
+  cursor: default;
+
+  &[data-active='true'] {
+    background: $layer-hover-01;
+  }
+}
+
+.label {
+  @include type-style('code-01');
+  inline-size: 1ch;
+  color: $text-secondary;
+  transition: color $slow $easing;
+
+  .view[data-phase='3'] .row[data-winner='true'] & {
+    color: $text-primary;
+    font-weight: 600;
+  }
+}
+
+.map {
+  display: block;
+  block-size: 100%;
+  opacity: 0;
+  transition: opacity $slow $easing calc(var(--i) * 20ms / #{$speed});
+
+  .view:not([data-phase='0']) & {
+    opacity: 1;
+  }
+}
+
+.track {
+  position: relative;
+  block-size: 40%;
+}
+
+.axis {
+  position: absolute;
+  inset-block: -30%;
+  inline-size: 1px;
+  background: $border-strong-01;
+}
+
+// Grows out from the zero axis: rightward for a positive score, leftward for a negative one.
+.bar {
+  position: absolute;
+  inset-block: 0;
+  background: $border-strong-01;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition:
+    transform $slow $easing calc(var(--i) * 40ms / #{$speed}),
+    background-color $slow $easing;
+
+  &[data-negative='true'] {
+    transform-origin: right center;
+  }
+
+  .view:is([data-phase='2'], [data-phase='3']) & {
+    transform: none;
+  }
+
+  .view[data-phase='3'] .row[data-winner='true'] & {
+    background: $interactive;
+  }
+}
+
+.score {
+  @include type-style('code-01');
+  min-inline-size: 7ch;
+  color: $text-secondary;
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+  opacity: 0;
+  transition: opacity $slow $easing calc(var(--i) * 40ms / #{$speed});
+
+  .view:is([data-phase='2'], [data-phase='3']) & {
+    opacity: 1;
+  }
+
+  .view[data-phase='3'] .row[data-winner='true'] & {
+    color: $text-primary;
+  }
+}
+
+.view[data-instant='true'] {
+  .digit,
+  .label,
+  .map,
+  .bar,
+  .score {
+    transition: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .digit,
+  .label,
+  .map,
+  .bar,
+  .score {
+    transition: none !important;
+  }
+}

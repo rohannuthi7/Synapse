@@ -51,6 +51,9 @@ class StageResult(BaseModel):
     image: str | None = None
     # 8 x 8 values, rows first, once the image has been downsampled.
     grid: list[list[int]] | None = None
+    # Packet bytes in wire order: what went to the board for "frame", what came
+    # back for "result".
+    bytes: list[int] | None = None
 
 
 class InferenceResponse(BaseModel):
@@ -91,3 +94,6 @@ class HealthResponse(BaseModel):
     version: str
     # Git commit of the running build, or "unknown" when none was provided.
     commit: str
+    # Which one would score the next upload: the FPGA (its serial port opens)
+    # or the Python emulator.
+    board: Literal["fpga", "emulated"]

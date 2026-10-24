@@ -26,12 +26,12 @@ function setup(summary: ComponentProps<typeof Workspace>['summary']) {
 describe('Workspace on narrow screens', () => {
   it('sums up where the run is in one line', () => {
     const { summaryButton } = setup({ position: 6, label: 'Grayscale', status: 'current' })
-    expect(summaryButton).toHaveTextContent('Stage 6 of 11 · GrayscaleAll stages')
+    expect(summaryButton).toHaveTextContent('Stage 6 of 12 · GrayscaleAll stages')
   })
 
   it('says how many stages there are before anything has run', () => {
     const { summaryButton } = setup({ label: 'Not started', status: 'incomplete' })
-    expect(summaryButton).toHaveTextContent('11 stages · Not started')
+    expect(summaryButton).toHaveTextContent('12 stages · Not started')
   })
 
   it('opens and closes the full list, and says which element it controls', () => {

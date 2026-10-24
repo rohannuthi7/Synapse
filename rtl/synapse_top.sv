@@ -1,14 +1,31 @@
 // DE1-SoC: clk CLOCK_50 PIN_AF14, rx GPIO_0[0] PIN_AC18, tx GPIO_0[1] PIN_Y17.
-// rst is active high. One USB-UART: adapter TX -> rx, tx -> adapter RX, GND to GND.
+// key0_n is push button KEY0 PIN_AA14, low while pressed, and resets the design.
+// One USB-UART: adapter TX -> rx, tx -> adapter RX, GND to GND.
 
 module synapse_top #(
-    parameter int CLKS_PER_BIT = 434
+    parameter int CLKS_PER_BIT = 434,
+    parameter int TIMEOUT_CLKS = 500_000
 ) (
     input  var logic clk,
-    input  var logic rst,
+    input  var logic key0_n,
     input  var logic rx,
     output logic     tx
 );
+    // The button is asynchronous to clk. Reset asserts at once and releases
+    // two clocks after the button does, so every flop leaves reset together.
+    logic rst_meta;
+    logic rst;
+
+    always_ff @(posedge clk or negedge key0_n) begin
+        if (!key0_n) begin
+            rst_meta <= 1'b1;
+            rst      <= 1'b1;
+        end else begin
+            rst_meta <= 1'b0;
+            rst      <= rst_meta;
+        end
+    end
+
     logic        rx_valid;
     logic [7:0]  rx_data;
     logic        good;
@@ -32,7 +49,7 @@ module synapse_top #(
         .valid (rx_valid)
     );
 
-    packet u_packet (
+    packet #(.TIMEOUT_CLKS(TIMEOUT_CLKS)) u_packet (
         .clk     (clk),
         .rst     (rst),
         .data    (rx_data),

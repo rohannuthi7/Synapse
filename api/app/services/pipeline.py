@@ -2,8 +2,8 @@
 
 The web player replays these stages in order, so each one reports only facts
 the code measured: its own wall time, whether it changed the picture, and the
-numbers that explain the change. The frame encoder is not written yet, so the
-run ends at contrast.
+numbers that explain the change. The run ends with the frame packet and the
+board's answer to it, from the FPGA or its emulator (services/board.py).
 """
 
 import base64
@@ -20,6 +20,8 @@ from PIL import Image
 
 from app.errors import PipelineError, SynapseError
 from app.schemas import FunctionRef, StageResult
+from app.services.board import Board, get_board, load_weights, load_weights_source, wire_ms
+from app.services.encoder import HEAD_BYTES, encode_frame
 from app.services.preprocess import (
     BRIGHT_BACKGROUND_CUTOFF,
     MAX_PIXELS,
@@ -144,9 +146,11 @@ def run_pipeline(
     declared_mime: str | None,
     received_ms: float,
     received_by: FunctionRef,
+    board: Board | None = None,
 ) -> PipelineResult:
-    """Run received through contrast on one upload. Raises PipelineError on failure."""
+    """Run received through the board's result on one upload. Raises PipelineError on failure."""
     run = _Run()
+    board = board if board is not None else get_board()
 
     run.add(
         "received",
@@ -276,6 +280,45 @@ def run_pipeline(
         not np.array_equal(stretched, small),
         {"before": _range(small), "after": _range(stretched), "shape": list(stretched.shape)},
         grid=stretched.tolist(),
+    )
+
+    packet, ms, ref = run.time("frame", encode_frame, stretched)
+    run.add(
+        "frame",
+        ms,
+        ref,
+        True,
+        {
+            "sync": packet[0],
+            "opcode": packet[1],
+            "length": packet[2],
+            "data_bytes": len(packet) - HEAD_BYTES - 1,
+            "checksum": packet[-1],
+        },
+        grid=stretched.tolist(),
+        bytes=list(packet),
+    )
+
+    # Timed from the first byte out to the last byte back, weights reload included.
+    answer, ms, ref = run.time("result", board.run, stretched)
+    run.add(
+        "result",
+        ms,
+        ref,
+        True,
+        {
+            "source": answer.source,
+            "port": answer.port,
+            "scores": answer.result.scores,
+            "digit": answer.result.digit,
+            "tie": answer.result.tie,
+            # The table the board scored with, so the page can draw the network.
+            "weights": load_weights().tolist(),
+            "weights_source": load_weights_source(),
+            "weights_sent": answer.weights_sent,
+            "wire_ms": round(wire_ms(answer.weights_sent), 3),
+        },
+        bytes=list(answer.reply),
     )
 
     return PipelineResult(run.stages, mime, img.width, img.height, img.format or "unknown")

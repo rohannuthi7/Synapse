@@ -8,8 +8,8 @@ describe('UploadStatus', () => {
     const region = screen.getByRole('status')
     expect(region).toHaveAttribute('aria-live', 'polite')
     expect(region).toHaveTextContent('Waiting for an image')
-    expect(region).toHaveTextContent('The 11 stages in the list run on the server')
-    expect(region).toHaveTextContent('digit classifier we are building in SystemVerilog for a DE1-SoC FPGA')
+    expect(region).toHaveTextContent('The 12 stages in the list run on the server')
+    expect(region).toHaveTextContent('digit classifier written in SystemVerilog on a DE1-SoC FPGA')
   })
 
   it('names the file while uploading', () => {

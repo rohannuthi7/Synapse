@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from './client'
 import { getHealth } from './health'
 
-const body = { status: 'ok', version: '0.4', commit: '3fa1c2e' }
+const body = { status: 'ok', version: '0.4', commit: '3fa1c2e', board: 'emulated' }
 
 afterEach(() => vi.unstubAllGlobals())
 

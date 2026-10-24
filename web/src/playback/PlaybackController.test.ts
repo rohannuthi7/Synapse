@@ -173,12 +173,12 @@ describe('PlaybackController', () => {
     expect(listener).not.toHaveBeenCalled()
   })
 
-  it('plays the fixture run end to end in 12.35s at 1×', () => {
+  it('plays the fixture run end to end in 14.84s at 1×', () => {
     const c = new PlaybackController(stageTimings(PLAYBACK_FIXTURE.stages))
     c.start()
-    vi.advanceTimersByTime(12_349)
-    expect(c.getSnapshot()).toMatchObject({ index: 10, finished: false })
+    vi.advanceTimersByTime(14_839)
+    expect(c.getSnapshot()).toMatchObject({ index: 11, finished: false })
     vi.advanceTimersByTime(1)
-    expect(c.getSnapshot()).toMatchObject({ index: 10, finished: true })
+    expect(c.getSnapshot()).toMatchObject({ index: 11, finished: true })
   })
 })

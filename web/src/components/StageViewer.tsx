@@ -3,7 +3,9 @@ import { fillTransform } from '../pipeline/crop'
 import type { CropGeometry, SlotRect } from '../pipeline/crop'
 import type { TransitionKind } from '../pipeline/motion'
 import type { PlaybackSpeed } from '../playback/PlaybackController'
+import type { StageMetaByKey } from '../pipeline/types'
 import FrameBytes from './FrameBytes'
+import NetworkView from './NetworkView'
 import PixelGrid from './PixelGrid'
 import type { GridLines } from './PixelGrid'
 import styles from './StageViewer.module.scss'
@@ -29,6 +31,10 @@ interface StageViewerProps {
   frameBytes?: readonly number[]
   /** On the Frame stage, show the 8 × 8 cells instead of the bytes. */
   showGrid?: boolean
+  /** Label for the dump's first row; the frame's by default. */
+  bytesHeadLabel?: string
+  /** On the Result stage: the input the board scored and what it answered. */
+  network?: { grid: number[][]; meta: StageMetaByKey['result'] }
   /** The run is over; the frame's row labels appear. */
   finished?: boolean
   /** Present from the crop stage on; later stages stay zoomed to it. */
@@ -68,6 +74,8 @@ function StageViewer({
   showValues = false,
   frameBytes,
   showGrid = false,
+  bytesHeadLabel,
+  network,
   finished = false,
   crop,
   transition,
@@ -146,9 +154,13 @@ function StageViewer({
           instant={settled}
         />
       )}
+      {network && (
+        <NetworkView grid={network.grid} meta={network.meta} phase={phase} settled={settled} />
+      )}
       {frameBytes && !showGrid && (
         <FrameBytes
           bytes={frameBytes}
+          headLabel={bytesHeadLabel}
           shown={settled || phase >= 1}
           labelled={finished}
           instant={settled}

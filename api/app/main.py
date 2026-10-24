@@ -7,10 +7,12 @@ from fastapi.responses import JSONResponse
 from app.errors import PipelineError, SynapseError
 from app.routers import inferences
 from app.schemas import ErrorDetail, ErrorResponse, HealthResponse
+from app.services.board import get_board
 
 # Shown in the web footer; bump it when the HTTP contract changes.
 # 0.5: inferences return every stage; errors name the stage that failed.
-API_VERSION = "0.5"
+# 0.6: frame and result stages; health reports which board answers.
+API_VERSION = "0.6"
 
 # Origins allowed to call the API, comma-separated. A deploy sets this to the
 # web app's address; the default is the Vite dev server.
@@ -61,4 +63,4 @@ def health() -> HealthResponse:
     # Read at call time (not bound at import) so tests can monkeypatch it.
     # Whoever starts the server sets SYNAPSE_COMMIT; nothing infers it.
     commit = os.environ.get("SYNAPSE_COMMIT", "unknown")
-    return HealthResponse(status="ok", version=API_VERSION, commit=commit)
+    return HealthResponse(status="ok", version=API_VERSION, commit=commit, board=get_board().source())

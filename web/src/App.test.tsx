@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 import { PLAYBACK_FIXTURE } from './pipeline/fixtures/playbackRun'
 
-const health = { status: 'ok', version: '0.5', commit: '3fa1c2e' }
+const health = { status: 'ok', version: '0.5', commit: '3fa1c2e', board: 'emulated' }
 // The real backend's stages: received through contrast, no frame encoder yet.
 const stages = PLAYBACK_FIXTURE.stages.slice(0, 10)
 const inference = {
@@ -57,7 +57,7 @@ async function trySample() {
 }
 
 describe('App', () => {
-  it('renders the header, the 11 stages, the dropzone and the waiting status', async () => {
+  it('renders the header, the 12 stages, the dropzone and the waiting status', async () => {
     stubBackend()
     render(<App />)
 
@@ -67,12 +67,12 @@ describe('App', () => {
     expect(repo).toHaveAttribute('target', '_blank')
 
     const list = within(screen.getByRole('navigation', { name: 'Pipeline stages' }))
-    expect(list.getAllByRole('listitem')).toHaveLength(11)
+    expect(list.getAllByRole('listitem')).toHaveLength(12)
     list.getAllByRole('button').forEach((button) => expect(button).toBeDisabled())
 
     expect(screen.getByText('Drag a PNG or JPEG here')).toBeInTheDocument()
     expect(screen.getByRole('status')).toHaveTextContent('Waiting for an image')
-    expect(await screen.findByText('API v0.5 · commit 3fa1c2e · Backend online')).toBeInTheDocument()
+    expect(await screen.findByText('API v0.5 · commit 3fa1c2e · Emulated board · Backend online')).toBeInTheDocument()
   })
 
   it('plays the stages the backend returns for the sample digit', async () => {
@@ -95,7 +95,7 @@ describe('App', () => {
     await trySample()
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Pipeline stopped at stage 8 of 11: Crop and center',
+      'Pipeline stopped at stage 8 of 12: Crop and center',
     )
     expect(screen.queryByRole('navigation', { name: 'Pipeline stages' })).not.toBeInTheDocument()
     expect(screen.getByText('services/preprocess.py › crop_digit(grid)')).toBeInTheDocument()

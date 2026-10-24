@@ -39,3 +39,21 @@ export function stageListItems(
     }
   })
 }
+
+/** Where the run's real time went, from the backend's per-stage measurements. */
+export interface RunTiming {
+  total: number
+  /** Received through Contrast: everything before the frame exists. */
+  preprocessing: number
+  frame: number
+  /** First byte out to last byte back, including any weight reload. */
+  board: number
+}
+
+export function runTiming(run: PipelineRun): RunTiming {
+  const ms = (key: string) => run.stages.find((s) => s.key === key)?.duration_ms ?? 0
+  const total = run.stages.reduce((sum, s) => sum + s.duration_ms, 0)
+  const frame = ms('frame')
+  const board = ms('result')
+  return { total, preprocessing: total - frame - board, frame, board }
+}

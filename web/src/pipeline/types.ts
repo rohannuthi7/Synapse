@@ -52,7 +52,30 @@ export interface StageMetaByKey {
   contrast: { before: ValueRange; after: ValueRange; shape: Shape }
   /** The FRAME packet rtl/packet.sv parses: sync, opcode, length, cells, XOR checksum. */
   frame: { sync: number; opcode: number; length: number; data_bytes: number; checksum: number }
+  /** The board's RESULT for the frame, from the FPGA or the backend's bit-exact emulator. */
+  result: {
+    source: BoardSource
+    /** Serial port the FPGA answered on; null for the emulator. */
+    port: string | null
+    /** One signed sum of brightness × weight per digit, 0 through 9. */
+    scores: number[]
+    digit: number
+    /** Another digit has the winner's score; the lower digit is reported. */
+    tie: boolean
+    /** 10 rows of 64 signed weights, -128 to 127, rows first like the grid. */
+    weights: number[][]
+    /** Where the weight table came from, e.g. the script that made it. */
+    weights_source: string
+    /** This run also sent the 10 WEIGHTS packets, after a connect or board reset. */
+    weights_sent: boolean
+    /** Time the run's bytes spend on the wire at 115200 baud, before USB and host delays. */
+    wire_ms: number
+  }
 }
+
+/** Which one scored the frame: the board itself, or the Python copy of its RTL. */
+export type BoardSource = 'fpga' | 'emulated'
+
 
 interface StageOf<K extends StageKey> {
   key: K
@@ -69,7 +92,7 @@ interface StageOf<K extends StageKey> {
   image?: string
   /** 8 × 8 values, 0-255, rows first, for the stages after downsampling. */
   grid?: number[][]
-  /** Every byte of the frame in send order, for the frame stage. */
+  /** Packet bytes in wire order: the FRAME sent, or the RESULT that came back. */
   bytes?: number[]
 }
 

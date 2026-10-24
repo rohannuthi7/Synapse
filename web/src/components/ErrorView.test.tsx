@@ -9,7 +9,7 @@ describe('ErrorView', () => {
     const file = new File([new Uint8Array(11 * 1024 * 1024)], 'huge.jpg', { type: 'image/jpeg' })
     render(<ErrorView failure={failureFromRejection({ file, reason: 'size' })} onUploadAnother={vi.fn()} />)
 
-    expect(screen.getByRole('alert')).toHaveTextContent('Pipeline stopped at stage 2 of 11: Validated')
+    expect(screen.getByRole('alert')).toHaveTextContent('Pipeline stopped at stage 2 of 12: Validated')
     expect(screen.getByText(/^This browser, before uploading/)).toBeInTheDocument()
     expect(screen.getByText('FILE_TOO_LARGE')).toBeInTheDocument()
     expect(screen.getByText(`File is ${file.size} bytes; limit is 10485760.`)).toBeInTheDocument()

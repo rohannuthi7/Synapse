@@ -3,7 +3,11 @@
 
 // decides how bytes form a message
 
-module packet (
+module packet #(
+    // 10 ms at 50 MHz. A USB-UART adapter can pause about 1 ms between the
+    // 64-byte USB transfers that make up one packet, so this must be far longer.
+    parameter int TIMEOUT_CLKS = 500_000
+) (
     input var logic clk,
     input var logic rst,
     input var logic [7:0] data,
@@ -27,6 +31,7 @@ module packet (
     state_t     state;
     logic [7:0] running_xor; // used for checksum
     logic [7:0] len_payload; // fits 65
+    logic [$clog2(TIMEOUT_CLKS + 1) - 1:0] idle_clks; // clocks since the last byte of this packet
 
     always_ff @(posedge clk) begin
         if (rst) begin
@@ -36,10 +41,21 @@ module packet (
             good <= 1'b0;
             bad <= 1'b0;
             reason <= '0;
+            idle_clks <= '0;
         end else begin
             good <= 1'b0;
             bad <= 1'b0;
-            if (valid) begin
+            if (valid || state == START)
+                idle_clks <= '0;
+            else
+                idle_clks <= idle_clks + 1'b1;
+
+            // A byte lost mid-packet would otherwise leave the parser eating the
+            // next packet as payload. Drop the partial packet silently; the host
+            // times out waiting for a reply and resends.
+            if (!valid && state != START && idle_clks == TIMEOUT_CLKS - 1) begin
+                state <= START;
+            end else if (valid) begin
                 case (state)
                     START: begin
                         if (data == 8'hA5) begin

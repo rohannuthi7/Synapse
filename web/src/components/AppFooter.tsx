@@ -9,6 +9,8 @@ interface AppFooterProps {
 /** Git's default short-hash length, so the footer matches `git log --oneline`. */
 const SHORT_COMMIT_LENGTH = 7
 
+const BOARD_NAMES = { fpga: 'FPGA connected', emulated: 'Emulated board' } as const
+
 function describeHealth(health: BackendHealth): string {
   switch (health.status) {
     case 'checking':
@@ -16,7 +18,7 @@ function describeHealth(health: BackendHealth): string {
     case 'offline':
       return 'Backend offline'
     case 'online':
-      return `API v${health.version} · commit ${health.commit.slice(0, SHORT_COMMIT_LENGTH)} · Backend online`
+      return `API v${health.version} · commit ${health.commit.slice(0, SHORT_COMMIT_LENGTH)} · ${BOARD_NAMES[health.board]} · Backend online`
     default: {
       const _exhaustive: never = health
       return _exhaustive

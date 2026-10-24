@@ -48,6 +48,19 @@ class NoDigitFoundError(SynapseError):
         super().__init__(message, detail)
 
 
+# The serial port won't open or the board never answered: the hardware, not
+# the request, is at fault, and trying again later can work.
+class BoardUnavailableError(SynapseError):
+    code = "BOARD_UNAVAILABLE"
+    status_code = 503
+
+
+# The board answered, but with a NACK, a corrupt packet, or the wrong reply.
+class BoardProtocolError(SynapseError):
+    code = "BOARD_PROTOCOL_ERROR"
+    status_code = 502
+
+
 class PipelineError(Exception):
     """A SynapseError raised inside a pipeline stage, with where it happened.
 

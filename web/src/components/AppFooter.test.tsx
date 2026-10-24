@@ -4,12 +4,12 @@ import AppFooter from './AppFooter'
 
 describe('AppFooter', () => {
   it('shows version, short commit and online status', () => {
-    render(<AppFooter health={{ status: 'online', version: '0.4', commit: '3fa1c2e9b7d0' }} />)
-    expect(screen.getByText('API v0.4 · commit 3fa1c2e · Backend online')).toBeInTheDocument()
+    render(<AppFooter health={{ status: 'online', version: '0.4', commit: '3fa1c2e9b7d0', board: 'fpga' }} />)
+    expect(screen.getByText('API v0.4 · commit 3fa1c2e · FPGA connected · Backend online')).toBeInTheDocument()
   })
 
   it('passes through an unknown commit', () => {
-    render(<AppFooter health={{ status: 'online', version: '0.4', commit: 'unknown' }} />)
+    render(<AppFooter health={{ status: 'online', version: '0.4', commit: 'unknown', board: 'emulated' }} />)
     expect(screen.getByText(/commit unknown/)).toBeInTheDocument()
   })
 

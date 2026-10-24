@@ -13,6 +13,8 @@ interface FrameBytesProps {
   labelled: boolean
   /** Jump straight to the end state, as after a pause or a jump. */
   instant: boolean
+  /** What the first row holds; the frame's head unless another packet is shown. */
+  headLabel?: string
 }
 
 interface ByteRow {
@@ -29,10 +31,10 @@ const hex = (n: number) => n.toString(16).toUpperCase().padStart(2, '0')
 
 // Head row, the cells 16 to a row, then the checksum row, each with the
 // offset of its first byte.
-function toRows(bytes: readonly number[], perRow: number): ByteRow[] {
+function toRows(bytes: readonly number[], perRow: number, headLabel: string): ByteRow[] {
   const dataEnd = bytes.length - FRAME_CHECKSUM_BYTES
   const rows: ByteRow[] = [
-    { offset: 0, bytes: bytes.slice(0, FRAME_HEAD_BYTES), part: 'head', label: 'sync · FRAME · length' },
+    { offset: 0, bytes: bytes.slice(0, FRAME_HEAD_BYTES), part: 'head', label: headLabel },
   ]
   for (let at = FRAME_HEAD_BYTES; at < dataEnd; at += perRow) {
     rows.push({ offset: at, bytes: bytes.slice(at, Math.min(at + perRow, dataEnd)), part: 'data' })
@@ -63,9 +65,9 @@ function Row({ offset, bytes, part, label }: ByteRow) {
 }
 
 /** The packet as a hex dump: what would go down the UART, byte for byte. */
-function FrameBytes({ bytes, shown, labelled, instant }: FrameBytesProps) {
+function FrameBytes({ bytes, shown, labelled, instant, headLabel = 'sync · FRAME · length' }: FrameBytesProps) {
   const narrow = useMediaQuery(NARROW_SCREEN)
-  const rows = toRows(bytes, narrow ? DATA_PER_ROW_NARROW : DATA_PER_ROW)
+  const rows = toRows(bytes, narrow ? DATA_PER_ROW_NARROW : DATA_PER_ROW, headLabel)
   const [head, checksum] = [rows[0], rows[rows.length - 1]]
   return (
     <div className={styles.dump} data-shown={shown} data-labelled={labelled} data-instant={instant}>

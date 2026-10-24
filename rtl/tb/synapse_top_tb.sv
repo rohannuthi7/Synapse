@@ -1,17 +1,21 @@
 `timescale 1ns/1ps
 
 // A ping should come back as ACK: A5 82 01 00 26.
+// A packet cut off mid-payload is dropped after the timeout, and the next ping still gets its ACK.
+// A ping with a bad checksum comes back as NACK, reason 0x01: A5 84 01 01 21.
 module synapse_top_tb;
     localparam int CLKS_PER_BIT = 4;
+    // A byte is 10 bits, 40 clocks here; the timeout must be longer than that.
+    localparam int TIMEOUT_CLKS = 200;
 
     logic clk = 0;
-    logic rst;
+    logic key0_n;
     logic rx;
     logic tx;
 
-    synapse_top #(.CLKS_PER_BIT(CLKS_PER_BIT)) dut (
-        .clk (clk),
-        .rst (rst),
+    synapse_top #(.CLKS_PER_BIT(CLKS_PER_BIT), .TIMEOUT_CLKS(TIMEOUT_CLKS)) dut (
+        .clk    (clk),
+        .key0_n (key0_n),
         .rx  (rx),
         .tx  (tx)
     );
@@ -46,30 +50,54 @@ module synapse_top_tb;
 
     logic [7:0] got [0:4];
 
-    initial begin
-        rst = 1'b1;
-        rx  = 1'b1;
-        repeat (4) @(posedge clk);
-        rst = 1'b0;
-        @(posedge clk);
-
+    // Send a ping with the given checksum and collect the 5-byte reply.
+    task automatic ping(input logic [7:0] checksum);
         fork
             begin
                 send_byte(8'hA5);
                 send_byte(8'h01);
                 send_byte(8'h00);
-                send_byte(8'hA4);
+                send_byte(checksum);
             end
             begin
                 for (int i = 0; i < 5; i++)
                     recv_byte(got[i]);
             end
         join
+    endtask
 
-        if (got[0] !== 8'hA5 || got[1] !== 8'h82 || got[2] !== 8'd1 || got[3] !== 8'h00 || got[4] !== 8'h26)
-            $fatal(1, "ACK %02h %02h %02h %02h %02h", got[0], got[1], got[2], got[3], got[4]);
+    task automatic expect_reply(input string what, input logic [7:0] op, input logic [7:0] arg, input logic [7:0] sum);
+        if (got[0] !== 8'hA5 || got[1] !== op || got[2] !== 8'd1 || got[3] !== arg || got[4] !== sum)
+            $fatal(1, "%s: %02h %02h %02h %02h %02h", what, got[0], got[1], got[2], got[3], got[4]);
+    endtask
 
+    initial begin
+        key0_n = 1'b0;
+        rx     = 1'b1;
+        repeat (4) @(posedge clk);
+        key0_n = 1'b1;
+        repeat (4) @(posedge clk);
+
+        ping(8'hA4);
+        expect_reply("ACK", 8'h82, 8'h00, 8'h26);
         $display("synapse_top: ping answered with ACK");
+
+        // FRAME header promising 64 bytes, then only 3 of them.
+        send_byte(8'hA5);
+        send_byte(8'h02);
+        send_byte(8'h40);
+        send_byte(8'h11);
+        send_byte(8'h22);
+        send_byte(8'h33);
+        repeat (TIMEOUT_CLKS + 10) @(posedge clk);
+        ping(8'hA4);
+        expect_reply("ACK after timeout", 8'h82, 8'h00, 8'h26);
+        $display("synapse_top: truncated packet dropped, next ping answered");
+
+        ping(8'hA5);
+        expect_reply("NACK", 8'h84, 8'h01, 8'h21);
+        $display("synapse_top: bad checksum answered with NACK 01");
+
         $finish;
     end
 endmodule

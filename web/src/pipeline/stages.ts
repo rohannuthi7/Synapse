@@ -1,4 +1,5 @@
-// The backend's preprocessing stages, in the order they run and are shown.
+// The backend's stages, preprocessing through the board's answer, in the
+// order they run and are shown.
 // Keys are what the API will send per stage; labels are the on-screen names.
 export const PIPELINE_STAGES = [
   { key: 'received', label: 'Received' },
@@ -12,6 +13,7 @@ export const PIPELINE_STAGES = [
   { key: 'downsample', label: 'Downsample' },
   { key: 'contrast', label: 'Contrast' },
   { key: 'frame', label: 'Frame' },
+  { key: 'result', label: 'Result' },
 ] as const
 
 export type StageKey = (typeof PIPELINE_STAGES)[number]['key']

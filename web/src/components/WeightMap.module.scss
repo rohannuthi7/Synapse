@@ -1,0 +1,17 @@
+@use '@carbon/styles/scss/theme' as *;
+
+.map {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  grid-template-rows: repeat(8, minmax(0, 1fr));
+  block-size: 100%;
+  aspect-ratio: 1 / 1;
+  box-sizing: border-box;
+  border: 1px solid $border-subtle-01;
+  background: $layer-02;
+}
+
+.cell {
+  min-inline-size: 0;
+  min-block-size: 0;
+}

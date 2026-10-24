@@ -23,8 +23,8 @@ function UploadStatus({ uploading }: UploadStatusProps) {
             server, one after another, and each result plays back here in the same square.
           </p>
           <p className={styles.body}>
-            The 8×8 grid is the input to a digit classifier we are building in SystemVerilog for a
-            DE1-SoC FPGA.
+            The 8×8 grid goes over UART to a digit classifier written in SystemVerilog on a DE1-SoC
+            FPGA, which replies with ten scores and the predicted digit.
           </p>
         </>
       )}

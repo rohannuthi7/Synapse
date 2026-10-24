@@ -13,6 +13,7 @@ def test_health_returns_status_version_and_commit(monkeypatch) -> None:
         "status": "ok",
         "version": API_VERSION,
         "commit": "3fa1c2e",
+        "board": "emulated",
     }
 
 

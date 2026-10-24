@@ -5,10 +5,14 @@ import styles from './DoneActions.module.scss'
 export type CopyState = 'idle' | 'copied' | 'failed'
 
 interface DoneActionsProps {
-  /** Present when the run has frame bytes, so the square can flip to the grid. */
-  gridToggle?: { showGrid: boolean; onToggle: () => void }
-  /** What Copy puts on the clipboard: the frame's bytes or the grid's 64 values. */
-  copyWhat: 'bytes' | 'values'
+  /**
+   * Present when the square has a second view to flip to: the grid behind the
+   * frame's bytes, or the reply bytes behind the network. `labels` are the
+   * button's text while off and while on.
+   */
+  gridToggle?: { showGrid: boolean; onToggle: () => void; labels?: readonly [off: string, on: string] }
+  /** What Copy puts on the clipboard, as the button names it. */
+  copyWhat: 'bytes' | 'values' | 'scores'
   copyState: CopyState
   /** One line on what the result is for, and what happens to it next. */
   note: string
@@ -41,7 +45,7 @@ function DoneActions({
             aria-pressed={gridToggle.showGrid}
             onClick={gridToggle.onToggle}
           >
-            {gridToggle.showGrid ? 'Show bytes' : 'Show grid'}
+            {(gridToggle.labels ?? ['Show grid', 'Show bytes'])[gridToggle.showGrid ? 1 : 0]}
           </Button>
         )}
         <Button kind="ghost" size="lg" renderIcon={Copy} className={styles.labelled} onClick={onCopy}>

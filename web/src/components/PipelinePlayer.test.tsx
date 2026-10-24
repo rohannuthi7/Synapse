@@ -32,7 +32,7 @@ describe('PipelinePlayer', () => {
     expect(screen.getByText('preprocess.py › to_grayscale(img)')).toBeInTheDocument()
     expect(screen.getByText('18–236')).toBeInTheDocument()
     expect(screen.getByRole('figure').querySelector('figcaption')).toHaveTextContent(
-      'Stage 6 of 11, Grayscale. Converting color to one brightness value per pixel.',
+      'Stage 6 of 12, Grayscale. Converting color to one brightness value per pixel.',
     )
     expect(screen.getByText('Playback slowed for viewing. Times shown are real.')).toBeInTheDocument()
   })
@@ -96,11 +96,13 @@ describe('PipelinePlayer', () => {
     })
   })
 
-  describe('when the run finishes', () => {
+  describe('when a run that ends at Frame finishes', () => {
+    const frameRun = { ...PLAYBACK_FIXTURE, id: 'frame', stages: PLAYBACK_FIXTURE.stages.slice(0, 11) }
     const FINISHED_AT_MS = 12_350
+    const setupFrame = () => render(<PipelinePlayer run={frameRun} onUploadAnother={vi.fn()} />)
 
     it('says the frame is ready and plainly that it was not sent', () => {
-      setup()
+      setupFrame()
       act(() => vi.advanceTimersByTime(FINISHED_AT_MS))
 
       expect(screen.getByRole('status')).toHaveTextContent(
@@ -110,11 +112,10 @@ describe('PipelinePlayer', () => {
       expect(screen.getByRole('button', { name: 'Upload another' })).toBeInTheDocument()
       expect(screen.getByText('sync · FRAME · length')).toBeInTheDocument()
       expect(screen.getByText('encoder.py › encode_frame(grid)')).toBeInTheDocument()
-      expect(screen.getByText('Planned')).toBeInTheDocument()
     })
 
     it('flips the square to the 8 × 8 grid with values, and back', () => {
-      setup()
+      setupFrame()
       act(() => vi.advanceTimersByTime(FINISHED_AT_MS))
       const figure = screen.getByRole('figure')
 
@@ -130,13 +131,88 @@ describe('PipelinePlayer', () => {
     it('copies the bytes in send order as hex', async () => {
       const writeText = vi.fn().mockResolvedValue(undefined)
       vi.stubGlobal('navigator', { clipboard: { writeText } })
-      setup()
+      setupFrame()
       act(() => vi.advanceTimersByTime(FINISHED_AT_MS))
 
       await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Copy bytes' })))
       expect(writeText.mock.calls[0][0]).toMatch(/^A5 02 40 00 00 12 C8 .* 97$/)
       expect(screen.getByRole('button', { name: 'Copied' })).toBeInTheDocument()
       vi.unstubAllGlobals()
+    })
+
+    it('forgets the grid view on replay', () => {
+      setupFrame()
+      act(() => vi.advanceTimersByTime(FINISHED_AT_MS))
+      fireEvent.click(screen.getByRole('button', { name: 'Show grid' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Replay' }))
+      act(() => vi.advanceTimersByTime(FINISHED_AT_MS))
+      expect(screen.getByRole('button', { name: 'Show grid' })).toHaveAttribute('aria-pressed', 'false')
+    })
+  })
+
+  describe('when the run finishes on the board result', () => {
+    const FINISHED_AT_MS = 14_840
+
+    it('names the prediction, who scored it, and the total time', () => {
+      setup()
+      act(() => vi.advanceTimersByTime(FINISHED_AT_MS))
+
+      expect(screen.getByRole('status')).toHaveTextContent(
+        'Predicted 2 · FPGA · COM5 · 14 msScored on the FPGA. Total 97 ms.',
+      )
+      expect(
+        screen.getByText(/^Preprocessing 82 ms · frame 1 ms · board 14 ms, of which 10\.7 ms is bytes on the wire\./),
+      ).toBeInTheDocument()
+      expect(screen.getByText('board.py › run(grid)')).toBeInTheDocument()
+      expect(screen.queryByRole('group', { name: 'Playback' })).not.toBeInTheDocument()
+    })
+
+    it('draws the network with every score, and says them to screen readers', () => {
+      setup()
+      act(() => vi.advanceTimersByTime(FINISHED_AT_MS))
+      const figure = screen.getByRole('figure')
+
+      expect(figure.querySelector('[data-winner="true"]')).toHaveTextContent('2')
+      expect(figure.querySelector('[data-phase="3"]')).not.toBeNull()
+      expect(figure.querySelector('figcaption')).toHaveTextContent('Scores: 0 −27,073, 1 −19,404, 2 73,434')
+    })
+
+    it('flips to the reply bytes and back', () => {
+      setup()
+      act(() => vi.advanceTimersByTime(FINISHED_AT_MS))
+
+      fireEvent.click(screen.getByRole('button', { name: 'Show reply bytes' }))
+      expect(screen.getByText('sync · RESULT · length')).toBeInTheDocument()
+      fireEvent.click(screen.getByRole('button', { name: 'Show network' }))
+      expect(screen.queryByText('sync · RESULT · length')).not.toBeInTheDocument()
+      const toggle = screen.getByRole('checkbox', { name: 'Show values (0–255)', hidden: true })
+      expect(toggle.closest('label')).toHaveAttribute('data-hidden', 'true')
+    })
+
+    it('copies the ten scores, the prediction and the reply', async () => {
+      const writeText = vi.fn().mockResolvedValue(undefined)
+      vi.stubGlobal('navigator', { clipboard: { writeText } })
+      setup()
+      act(() => vi.advanceTimersByTime(FINISHED_AT_MS))
+
+      await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Copy scores' })))
+      const lines = (writeText.mock.calls[0][0] as string).split('\n')
+      expect(lines[0]).toBe('0\t-27073')
+      expect(lines[10]).toBe('predicted\t2')
+      expect(lines[11]).toMatch(/^reply\tA5 83 2A /)
+      vi.unstubAllGlobals()
+    })
+
+    it('says plainly when the emulator answered instead of the board', () => {
+      const stages = PLAYBACK_FIXTURE.stages.map((stage) =>
+        stage.key === 'result' ? { ...stage, meta: { ...stage.meta, source: 'emulated' as const, port: null } } : stage,
+      )
+      render(<PipelinePlayer run={{ ...PLAYBACK_FIXTURE, id: 'emulated', stages }} onUploadAnother={vi.fn()} />)
+      act(() => vi.advanceTimersByTime(FINISHED_AT_MS))
+
+      expect(screen.getByRole('status')).toHaveTextContent(
+        'Predicted 2 · Emulated · 14 msNo board connected: scored by the emulator. Total 97 ms.',
+      )
     })
 
     it('keeps keyboard control when the focused control disappears at the end', () => {
@@ -147,15 +223,6 @@ describe('PipelinePlayer', () => {
 
       fireEvent.keyDown(main, { key: 'R' })
       expect(screen.getByRole('status')).toHaveTextContent('Received')
-    })
-
-    it('forgets the grid view on replay', () => {
-      setup()
-      act(() => vi.advanceTimersByTime(FINISHED_AT_MS))
-      fireEvent.click(screen.getByRole('button', { name: 'Show grid' }))
-      fireEvent.click(screen.getByRole('button', { name: 'Replay' }))
-      act(() => vi.advanceTimersByTime(FINISHED_AT_MS))
-      expect(screen.getByRole('button', { name: 'Show grid' })).toHaveAttribute('aria-pressed', 'false')
     })
   })
 

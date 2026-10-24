@@ -19,6 +19,7 @@ describe('transitionFor', () => {
       'downsample',
       'contrast',
       'frame',
+      'network',
     ])
   })
 
@@ -33,13 +34,13 @@ describe('transitionFor', () => {
 describe('stageTimings', () => {
   it('holds 900ms after animations, 300-600ms after instant stages, and 0 after the last', () => {
     expect(stageTimings(PLAYBACK_FIXTURE.stages).map((t) => t.holdMs)).toEqual([
-      600, 300, 900, 900, 300, 900, 900, 900, 900, 900, 0,
+      600, 300, 900, 900, 300, 900, 900, 900, 900, 900, 900, 0,
     ])
   })
 
   it('uses the prototype end times; the frame is 10ms per byte plus the last fade', () => {
     expect(stageTimings(PLAYBACK_FIXTURE.stages).map((t) => t.endMs)).toEqual([
-      0, 0, 430, 430, 0, 430, 430, 1370, 590, 350, 820,
+      0, 0, 430, 430, 0, 430, 430, 1370, 590, 350, 820, 1590,
     ])
   })
 })

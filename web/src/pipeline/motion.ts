@@ -1,7 +1,15 @@
 import type { Stage } from './types'
 
 /** How the viewer moves into a stage. `none` is an instant swap. */
-export type TransitionKind = 'none' | 'line' | 'wipe' | 'crop' | 'downsample' | 'contrast' | 'frame'
+export type TransitionKind =
+  | 'none'
+  | 'line'
+  | 'wipe'
+  | 'crop'
+  | 'downsample'
+  | 'contrast'
+  | 'frame'
+  | 'network'
 
 /**
  * Lets the browser paint a stage's starting picture before anything moves.
@@ -21,7 +29,9 @@ export interface TransitionPlan {
 // From the Playback prototype. Each end is the last phase's start plus its
 // Carbon duration: slow-01 400ms for scan and wipe, moderate-02 240ms for the
 // crop box and grid lines, slow-02 700ms for the dim, and per-cell or per-byte
-// staggers for the grid and frame.
+// staggers for the grid and frame. Network: 1 the input and weight maps fade
+// in (slow-01), 2 the ten score bars grow 40ms apart (slow-01 plus nine
+// staggers), 3 the winner lights up and its digit appears (slow-01).
 export const TRANSITION_PLANS: Record<TransitionKind, TransitionPlan> = {
   none: { phases: [], endMs: 0 },
   line: { phases: [[30, 1]], endMs: 430 },
@@ -30,6 +40,7 @@ export const TRANSITION_PLANS: Record<TransitionKind, TransitionPlan> = {
   downsample: { phases: [[30, 1], [270, 2]], endMs: 590 },
   contrast: { phases: [[30, 1]], endMs: 350 },
   frame: { phases: [[30, 1]], endMs: 840 },
+  network: { phases: [[30, 1], [430, 2], [1190, 3]], endMs: 1590 },
 }
 
 /** Time to read a finished stage before auto-advancing. */
@@ -59,6 +70,8 @@ export function transitionFor(stage: Stage): TransitionKind {
       return 'contrast'
     case 'frame':
       return 'frame'
+    case 'result':
+      return 'network'
     default: {
       const _exhaustive: never = stage
       return _exhaustive

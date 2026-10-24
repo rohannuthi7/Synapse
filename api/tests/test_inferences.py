@@ -1,6 +1,7 @@
 import io
 from uuid import UUID
 
+import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
 
@@ -34,6 +35,8 @@ STAGE_KEYS = [
     "crop",
     "downsample",
     "contrast",
+    "frame",
+    "result",
 ]
 
 
@@ -163,6 +166,40 @@ def test_final_grid_is_8_by_8_and_stretched_to_the_full_range() -> None:
     grid = stages["contrast"]["grid"]
     assert len(grid) == 8 and all(len(row) == 8 for row in grid)
     assert stages["contrast"]["meta"]["after"] == {"min": 0, "max": 255}
+
+
+def test_frame_stage_carries_the_packet_sent_to_the_board() -> None:
+    stages = {s["key"]: s for s in post(make_image_bytes("PNG")).json()["stages"]}
+    frame = stages["frame"]
+    assert frame["function"] == {"file": "services/encoder.py", "name": "encode_frame", "params": ["grid"]}
+    assert frame["meta"] == {
+        "sync": 0xA5,
+        "opcode": 0x02,
+        "length": 64,
+        "data_bytes": 64,
+        "checksum": frame["bytes"][-1],
+    }
+    cells = [v for row in stages["contrast"]["grid"] for v in row]
+    assert frame["bytes"][:3] == [0xA5, 0x02, 64]
+    assert frame["bytes"][3:-1] == cells
+    assert len(frame["bytes"]) == 68
+
+
+def test_result_stage_reports_the_emulated_board() -> None:
+    result = {s["key"]: s for s in post(make_image_bytes("PNG")).json()["stages"]}["result"]
+    meta = result["meta"]
+    assert meta["source"] == "emulated"
+    assert meta["port"] is None
+    assert len(meta["scores"]) == 10
+    assert meta["digit"] == meta["scores"].index(max(meta["scores"]))
+    assert len(meta["weights"]) == 10 and all(len(row) == 64 for row in meta["weights"])
+    assert meta["weights_source"].startswith("scripts/make_weights.py")
+    assert meta["weights_sent"] is False
+    # FRAME 68 + ACK 5 + RUN 4 + RESULT 46 bytes at 86.8 us each.
+    assert meta["wire_ms"] == pytest.approx(123 * 10 / 115200 * 1000, abs=0.001)
+    # The 46-byte RESULT packet result.sv would send.
+    assert result["bytes"][:3] == [0xA5, 0x83, 42]
+    assert len(result["bytes"]) == 46
 
 
 def test_crop_reports_its_box_in_input_pixels() -> None:

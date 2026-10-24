@@ -28,6 +28,7 @@ describe('stage notes', () => {
       '2 ms',
       '1 ms',
       '1 ms',
+      '14 ms · → 2',
     ])
   })
 
@@ -57,6 +58,28 @@ describe('stageStatus', () => {
   })
 })
 
+describe('the result stage', () => {
+  const result = byKey('result')
+
+  it('names who scored the frame and what it predicted', () => {
+    expect(stageStatus(result)).toBe('The FPGA scored all ten digits and predicted 2.')
+    const emulated = { ...result, meta: { ...result.meta, source: 'emulated' as const, port: null } }
+    expect(stageStatus(emulated)).toBe('The emulator scored all ten digits and predicted 2.')
+    expect(stageMetaRows(emulated)[0]).toEqual({ label: 'Source', value: 'Emulated' })
+  })
+
+  it('reports a tie and which digits share the score', () => {
+    const scores = [5, 9, 1, 9, 0, 0, 9, 0, 0, 0]
+    const tied = { ...result, meta: { ...result.meta, scores, digit: 1, tie: true } }
+    expect(stageStatus(tied)).toBe('The FPGA scored all ten digits and predicted 1 (tied with 3, 6).')
+  })
+
+  it('notes a weight reload in the round trip', () => {
+    const reloaded = { ...result, meta: { ...result.meta, weights_sent: true } }
+    expect(stageMetaRows(reloaded)[2]).toEqual({ label: 'Round trip', value: '14 ms · weights reloaded' })
+  })
+})
+
 describe('stageMetaRows', () => {
   const rows = (stage: Stage) => stageMetaRows(stage).map(({ label, value }) => `${label}: ${value}`)
 
@@ -73,6 +96,7 @@ describe('stageMetaRows', () => {
       ['Block size: 299 px', 'Shape: 8 × 8', 'Range: 14–231'],
       ['Before (min–max): 14–231', 'After (min–max): 0–255', 'Shape: 8 × 8'],
       ['Total: 68 bytes', 'Data: 64 bytes', 'Sync, opcode, length: A5 02 40', 'Checksum (XOR): 97'],
+      ['Source: FPGA · COM5', 'Top score: 73,434', 'Round trip: 14 ms', 'Wire time: 10.7 ms'],
     ])
   })
 
@@ -93,7 +117,7 @@ describe('formatting', () => {
   it('formats function references with their real parameters', () => {
     expect(formatFunction(byKey('grayscale').function)).toBe('preprocess.py › to_grayscale(img)')
     expect(formatFunction(byKey('frame').function)).toBe('encoder.py › encode_frame(grid)')
-    expect(byKey('frame').function.planned).toBe(true)
+    expect(formatFunction(byKey('result').function)).toBe('board.py › run(grid)')
   })
 
   it('shows the file name, or the full path under api/app when asked', () => {

@@ -55,7 +55,7 @@ WEIGHTS, 10 packets of 69 bytes: 59.9 ms.
 RESULT packet, 46 bytes: 4.0 ms. The 42-byte payload is 10 int32 scores, the winning digit, and flags. The other 4 bytes are sync, opcode, length, and checksum.
 
 Board-to-Host Communications:
-Opcode = 0x81, 'PONG', 1 byte payload
+Opcode = 0x81, 'PONG', 1 byte payload (reserved; the RTL answers PING with ACK)
 Opcode = 0x82, 'ACK', 1 byte payload
 Opcode = 0x83, 'RESULT', 42 byte payload (10 little-endian int32 scores, winning digit, flags)
 Opcode = 0x84, 'NACK', 1 byte payloaod 

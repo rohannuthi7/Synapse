@@ -1,5 +1,5 @@
 import type { StageKey } from '../pipeline/stages'
-import type { FunctionRef, Stage } from '../pipeline/types'
+import type { BoardSource, FunctionRef, Stage } from '../pipeline/types'
 
 // These mirror api/app/schemas.py and must change together with it. A UUID
 // arrives over JSON as a plain string.
@@ -39,4 +39,6 @@ export interface HealthResponse {
   version: string
   /** Git commit of the running build, or "unknown". */
   commit: string
+  /** Which one would score the next upload. */
+  board: BoardSource
 }

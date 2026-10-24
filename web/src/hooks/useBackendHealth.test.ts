@@ -7,7 +7,7 @@ import { useBackendHealth } from './useBackendHealth'
 vi.mock('../api/health', () => ({ getHealth: vi.fn() }))
 
 const mockedHealth = vi.mocked(getHealth)
-const online = { status: 'ok', version: '0.4', commit: '3fa1c2e' } as const
+const online = { status: 'ok', version: '0.4', commit: '3fa1c2e', board: 'emulated' } as const
 
 beforeEach(() => {
   vi.useFakeTimers()
@@ -23,7 +23,7 @@ describe('useBackendHealth', () => {
     expect(result.current).toEqual({ status: 'checking' })
 
     await act(async () => {})
-    expect(result.current).toEqual({ status: 'online', version: '0.4', commit: '3fa1c2e' })
+    expect(result.current).toEqual({ status: 'online', version: '0.4', commit: '3fa1c2e', board: 'emulated' })
   })
 
   it('reports offline when the request fails', async () => {
