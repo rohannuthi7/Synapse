@@ -1,0 +1,5 @@
+Info (10281): Verilog HDL Declaration information at run.sv(22): object "START" differs only in case from object "start" in the same scope File: C:/synapse/Synapse/rtl/run.sv Line: 22
+Info (10281): Verilog HDL Declaration information at run.sv(22): object "DONE" differs only in case from object "done" in the same scope File: C:/synapse/Synapse/rtl/run.sv Line: 22
+Info (10281): Verilog HDL Declaration information at packet.sv(14): object "opcode" differs only in case from object "OPCODE" in the same scope File: C:/synapse/Synapse/rtl/packet.sv Line: 14
+Info (10281): Verilog HDL Declaration information at packet.sv(15): object "length" differs only in case from object "LENGTH" in the same scope File: C:/synapse/Synapse/rtl/packet.sv Line: 15
+Info (10281): Verilog HDL Declaration information at packet.sv(17): object "payload" differs only in case from object "PAYLOAD" in the same scope File: C:/synapse/Synapse/rtl/packet.sv Line: 17
