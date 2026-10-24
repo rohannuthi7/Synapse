@@ -1,20 +1,16 @@
-# vsim -c synapse_top_tb -do "run -all; quit -f" 
-# Start time: 16:21:16 on Oct 24,2026
+# vsim -c score_tb -do "run -all; quit -f" 
+# Start time: 05:30:37 on Oct 21,2026
 # Loading sv_std.std
-# Loading work.synapse_top_tb
-# Loading work.synapse_top
-# Loading work.uart_rx
-# Loading work.packet
-# Loading work.frame
-# Loading work.weights
-# Loading work.run
+# Loading work.score_tb
 # Loading work.score
-# Loading work.winning_digit
-# Loading work.result
-# Loading work.uart_tx
 # run -all
-# synapse_top: ping answered with ACK
-# ** Note: $finish    : c:/synapse/Synapse/rtl/tb/synapse_top_tb.sv(73)
-#    Time: 7670 ns  Iteration: 1  Instance: /synapse_top_tb
-# End time: 16:21:16 on Oct 24,2026, Elapsed time: 0:00:00
+# all dark: 0
+# all bright, weight -128: -2088960
+# one cell 255 * 127: 32385
+# one cell 1 * -1: -1
+# mixed signs: -1921
+# score: brightness multiply matched
+# ** Note: $finish    : rtl/tb/score_tb.sv(61)
+#    Time: 5 ps  Iteration: 0  Instance: /score_tb
+# End time: 05:30:38 on Oct 21,2026, Elapsed time: 0:00:01
 # Errors: 0, Warnings: 0

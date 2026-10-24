@@ -2,7 +2,7 @@ import io
 from uuid import UUID
 
 from fastapi.testclient import TestClient
-from PIL import Image, ImageDraw
+from PIL import Image
 
 from app.main import app
 from app.schemas import ErrorResponse, InferenceResponse
@@ -14,10 +14,8 @@ PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
 
 
 def make_image_bytes(fmt: str) -> bytes:
-    img = Image.new("RGB", (20, 10), "white")
-    ImageDraw.Draw(img).rectangle((5, 2, 14, 7), fill="black")
     buf = io.BytesIO()
-    img.save(buf, format=fmt)
+    Image.new("RGB", (20, 10), "white").save(buf, format=fmt)
     return buf.getvalue()
 
 
@@ -37,8 +35,6 @@ def test_create_inference_reports_upload_info() -> None:
     assert body["upload"]["width"] == 20
     assert body["upload"]["height"] == 10
     assert body["upload"]["format"] == "PNG"
-    assert len(body["cells"]) == 64
-    assert all(0 <= cell <= 255 for cell in body["cells"])
 
 
 def test_success_body_matches_inference_response() -> None:
@@ -48,17 +44,6 @@ def test_success_body_matches_inference_response() -> None:
     )
     assert response.status_code == 201
     InferenceResponse.model_validate(response.json())
-
-
-def test_blank_image_has_no_digit() -> None:
-    buf = io.BytesIO()
-    Image.new("RGB", (20, 10), "white").save(buf, format="PNG")
-    response = client.post(
-        "/api/inferences",
-        files={"image": ("blank.png", buf.getvalue(), "image/png")},
-    )
-    assert response.status_code == 400
-    assert response.json()["error"]["code"] == "NO_DIGIT_FOUND"
 
 
 def test_upload_jpeg_reports_detected_mime() -> None:

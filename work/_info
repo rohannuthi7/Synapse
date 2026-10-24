@@ -11,7 +11,7 @@ cModel Technology
 Z0 dC:/synapse/Synapse
 vframe
 Z1 DXx6 sv_std 3 std 0 22 VYECXdT12H8WgbUP_5Y6:3
-Z2 !s110 1792876869
+Z2 !s110 1792862480
 !i10b 1
 !s100 ;gFHUi@51@P`556@>5>:>1
 Z3 !s11b Dg1SIo80bB@j0V0VzS_@n1
@@ -22,15 +22,15 @@ R0
 w1792862476
 8c:\synapse\Synapse\rtl\frame.sv
 Fc:\synapse\Synapse\rtl\frame.sv
-!i122 13
+!i122 10
 L0 1 27
 Z5 OV;L;2020.1;71
 r1
 !s85 0
 31
-Z6 !s108 1792876869.000000
-!s107 c:\synapse\Synapse\rtl\tb\synapse_top_tb.sv|c:\synapse\Synapse\rtl\tb\winning_digit_tb.sv|c:\synapse\Synapse\rtl\tb\result_tb.sv|c:\synapse\Synapse\rtl\synapse_top.sv|c:\synapse\Synapse\rtl\result.sv|c:\synapse\Synapse\rtl\winning_digit.sv|c:\synapse\Synapse\rtl\run.sv|c:\synapse\Synapse\rtl\score.sv|c:\synapse\Synapse\rtl\weights.sv|c:\synapse\Synapse\rtl\frame.sv|c:\synapse\Synapse\rtl\packet.sv|c:\synapse\Synapse\rtl\uart_rx.sv|c:\synapse\Synapse\rtl\uart_tx.sv|
-Z7 !s90 -sv|c:\synapse\Synapse\rtl\uart_tx.sv|c:\synapse\Synapse\rtl\uart_rx.sv|c:\synapse\Synapse\rtl\packet.sv|c:\synapse\Synapse\rtl\frame.sv|c:\synapse\Synapse\rtl\weights.sv|c:\synapse\Synapse\rtl\score.sv|c:\synapse\Synapse\rtl\run.sv|c:\synapse\Synapse\rtl\winning_digit.sv|c:\synapse\Synapse\rtl\result.sv|c:\synapse\Synapse\rtl\synapse_top.sv|c:\synapse\Synapse\rtl\tb\result_tb.sv|c:\synapse\Synapse\rtl\tb\winning_digit_tb.sv|c:\synapse\Synapse\rtl\tb\synapse_top_tb.sv|
+Z6 !s108 1792862480.000000
+!s107 c:\synapse\Synapse\rtl\packet.sv|c:\synapse\Synapse\rtl\weights.sv|c:\synapse\Synapse\rtl\frame.sv|c:\synapse\Synapse\rtl\run.sv|c:\synapse\Synapse\rtl\score.sv|
+Z7 !s90 -sv|c:\synapse\Synapse\rtl\score.sv|c:\synapse\Synapse\rtl\run.sv|c:\synapse\Synapse\rtl\frame.sv|c:\synapse\Synapse\rtl\weights.sv|c:\synapse\Synapse\rtl\packet.sv|
 !i113 1
 o-sv
 Z8 tCvgOpt 0
@@ -47,64 +47,14 @@ R0
 w1792669093
 8c:\synapse\Synapse\rtl\packet.sv
 Fc:\synapse\Synapse\rtl\packet.sv
-!i122 13
+!i122 10
 L0 6 96
 R5
 r1
 !s85 0
 31
 R6
-Z9 !s107 c:\synapse\Synapse\rtl\tb\synapse_top_tb.sv|c:\synapse\Synapse\rtl\tb\winning_digit_tb.sv|c:\synapse\Synapse\rtl\tb\result_tb.sv|c:\synapse\Synapse\rtl\synapse_top.sv|c:\synapse\Synapse\rtl\result.sv|c:\synapse\Synapse\rtl\winning_digit.sv|c:\synapse\Synapse\rtl\run.sv|c:\synapse\Synapse\rtl\score.sv|c:\synapse\Synapse\rtl\weights.sv|c:\synapse\Synapse\rtl\frame.sv|c:\synapse\Synapse\rtl\packet.sv|c:\synapse\Synapse\rtl\uart_rx.sv|c:\synapse\Synapse\rtl\uart_tx.sv|
-R7
-!i113 1
-o-sv
-R8
-vresult
-R1
-R2
-!i10b 1
-!s100 Fk?Il=XP6i0VdOFGflE8d3
-R3
-IQi@f^mB[2ZXjYz:1D]0TC0
-R4
-S1
-R0
-w1792876814
-8c:\synapse\Synapse\rtl\result.sv
-Fc:\synapse\Synapse\rtl\result.sv
-!i122 13
-L0 1 133
-R5
-r1
-!s85 0
-31
-R6
-R9
-R7
-!i113 1
-o-sv
-R8
-vresult_tb
-R1
-R2
-!i10b 1
-!s100 KR>6OSXmcR@?ZgLQQYAzG3
-R3
-IV5bm7f7Nc^[SIcLH8aZD@1
-R4
-S1
-R0
-w1792876815
-8c:\synapse\Synapse\rtl\tb\result_tb.sv
-Fc:\synapse\Synapse\rtl\tb\result_tb.sv
-!i122 13
-L0 3 91
-R5
-r1
-!s85 0
-31
-R6
-R9
+Z9 !s107 c:\synapse\Synapse\rtl\packet.sv|c:\synapse\Synapse\rtl\weights.sv|c:\synapse\Synapse\rtl\frame.sv|c:\synapse\Synapse\rtl\run.sv|c:\synapse\Synapse\rtl\score.sv|
 R7
 !i113 1
 o-sv
@@ -113,17 +63,17 @@ vrun
 R1
 R2
 !i10b 1
-!s100 MJUJj0@zYEFVLTE]2PJH03
+!s100 R`5kRo;E2AnJn_BGdK_Zf1
 R3
-IIeOfeQ<;O60ACl<e>Z<2j1
+IFBlnBBc]`nl<hzhkXc=_N1
 R4
 S1
 R0
-w1792876803
+w1792861959
 8c:\synapse\Synapse\rtl\run.sv
 Fc:\synapse\Synapse\rtl\run.sv
-!i122 13
-L0 1 68
+!i122 10
+L0 1 56
 R5
 r1
 !s85 0
@@ -147,7 +97,7 @@ R0
 w1792578633
 8c:\synapse\Synapse\rtl\score.sv
 Fc:\synapse\Synapse\rtl\score.sv
-!i122 13
+!i122 10
 L0 1 15
 R5
 r1
@@ -184,84 +134,34 @@ r1
 !i113 1
 o-sv
 R8
-vsynapse_top
-R1
-R2
-!i10b 1
-!s100 0:T[V[^hBIebG56lPYOm:3
-R3
-IjW0YRN7o>hbFDS8nUD3V21
-R4
-S1
-R0
-w1792876808
-8c:\synapse\Synapse\rtl\synapse_top.sv
-Fc:\synapse\Synapse\rtl\synapse_top.sv
-!i122 13
-L0 4 93
-R5
-r1
-!s85 0
-31
-R6
-R9
-R7
-!i113 1
-o-sv
-R8
-vsynapse_top_tb
-R1
-R2
-!i10b 1
-!s100 E:<8;i[FOUBo;QR<`i1<40
-R3
-IGP[1nDlAR>eo:=HIG:KTk2
-R4
-S1
-R0
-w1792876824
-8c:\synapse\Synapse\rtl\tb\synapse_top_tb.sv
-Fc:\synapse\Synapse\rtl\tb\synapse_top_tb.sv
-!i122 13
-L0 4 72
-R5
-r1
-!s85 0
-31
-R6
-R9
-R7
-!i113 1
-o-sv
-R8
 vuart_rx
 R1
-R2
+Z10 !s110 1792571696
 !i10b 1
 !s100 j^zTg]HHoIISYKO;i3PzV1
 R3
-I2LZcYGO?iWkig<I6La:=02
+I[G@ONm_TM`Ojo@Fba>EHo2
 R4
 S1
 R0
 w1792571590
-8c:\synapse\Synapse\rtl\uart_rx.sv
-Fc:\synapse\Synapse\rtl\uart_rx.sv
-!i122 13
+8rtl/uart_rx.sv
+Frtl/uart_rx.sv
+!i122 3
 L0 1 86
 R5
 r1
 !s85 0
 31
-R6
-R9
-R7
+Z11 !s108 1792571696.000000
+Z12 !s107 tb/uart_rx_tb.sv|rtl/uart_rx.sv|
+Z13 !s90 -sv|rtl/uart_rx.sv|tb/uart_rx_tb.sv|
 !i113 1
 o-sv
 R8
 vuart_rx_tb
 R1
-!s110 1792571696
+R10
 !i10b 1
 !s100 9ePHGAeaQLTGjc:H9aL=20
 R3
@@ -278,40 +178,40 @@ R5
 r1
 !s85 0
 31
-!s108 1792571696.000000
-!s107 tb/uart_rx_tb.sv|rtl/uart_rx.sv|
-!s90 -sv|rtl/uart_rx.sv|tb/uart_rx_tb.sv|
+R11
+R12
+R13
 !i113 1
 o-sv
 R8
 vuart_tx
 R1
-R2
+Z14 !s110 1792399218
 !i10b 1
 !s100 FRk9bjDCQHjIEROHM6VSh1
 R3
-IKBgjZQg@R;?h8OLGIok1i1
+I>PzWiSFRR0ZD=Xmg_WWn:1
 R4
 S1
 R0
-w1792414649
-8c:\synapse\Synapse\rtl\uart_tx.sv
-Fc:\synapse\Synapse\rtl\uart_tx.sv
-!i122 13
+w1792399152
+8rtl/uart_tx.sv
+Frtl/uart_tx.sv
+!i122 1
 L0 1 85
 R5
 r1
 !s85 0
 31
-R6
-R9
-R7
+Z15 !s108 1792399217.000000
+Z16 !s107 tb/uart_tx_tb.sv|rtl/uart_tx.sv|
+Z17 !s90 -sv|rtl/uart_tx.sv|tb/uart_tx_tb.sv|
 !i113 1
 o-sv
 R8
 vuart_tx_tb
 R1
-!s110 1792399218
+R14
 !i10b 1
 !s100 B0P8g6nN;4dA^[gP;K_W32
 R3
@@ -328,9 +228,9 @@ R5
 r1
 !s85 0
 31
-!s108 1792399217.000000
-!s107 tb/uart_tx_tb.sv|rtl/uart_tx.sv|
-!s90 -sv|rtl/uart_tx.sv|tb/uart_tx_tb.sv|
+R15
+R16
+R17
 !i113 1
 o-sv
 R8
@@ -347,58 +247,8 @@ R0
 w1792671851
 8c:\synapse\Synapse\rtl\weights.sv
 Fc:\synapse\Synapse\rtl\weights.sv
-!i122 13
+!i122 10
 L0 1 29
-R5
-r1
-!s85 0
-31
-R6
-R9
-R7
-!i113 1
-o-sv
-R8
-vwinning_digit
-R1
-R2
-!i10b 1
-!s100 9c6^Shz[nzgoV28>V^P?L0
-R3
-IeiP`Q3H7NV6J[l9[Z>nW_0
-R4
-S1
-R0
-w1792876861
-8c:\synapse\Synapse\rtl\winning_digit.sv
-Fc:\synapse\Synapse\rtl\winning_digit.sv
-!i122 13
-L0 1 25
-R5
-r1
-!s85 0
-31
-R6
-R9
-R7
-!i113 1
-o-sv
-R8
-vwinning_digit_tb
-R1
-R2
-!i10b 1
-!s100 _6dYl];<^=^7gc6cHAYnS3
-R3
-Ik87aK1c`:G@H]E^zUij=@0
-R4
-S1
-R0
-w1792876821
-8c:\synapse\Synapse\rtl\tb\winning_digit_tb.sv
-Fc:\synapse\Synapse\rtl\tb\winning_digit_tb.sv
-!i122 13
-L0 3 34
 R5
 r1
 !s85 0

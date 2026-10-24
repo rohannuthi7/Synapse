@@ -21,7 +21,6 @@ const result: InferenceResponse = {
     height: 10,
     format: 'PNG',
   },
-  cells: Array.from({ length: 64 }, () => 0),
 }
 
 const mockedUpload = vi.mocked(uploadImage)

@@ -26,8 +26,6 @@ class InferenceResponse(BaseModel):
 
     id: UUID
     upload: UploadInfo
-    # 64 unsigned brightness bytes, row-major. Cell 0 is cells[0].
-    cells: list[int]
 
 
 class ErrorDetail(BaseModel):

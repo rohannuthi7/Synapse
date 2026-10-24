@@ -3,7 +3,7 @@ import uuid
 from fastapi import APIRouter, UploadFile
 
 from app.schemas import ErrorResponse, InferenceResponse, UploadInfo
-from app.services.preprocess import decode, to_frame
+from app.services.preprocess import decode
 from app.services.validate import validate_upload
 
 router = APIRouter(prefix="/api/inferences")
@@ -19,7 +19,6 @@ async def create_inference(image: UploadFile) -> InferenceResponse:
     data = await image.read()
     detected_mime = validate_upload(data)
     img = decode(data)
-    cells = to_frame(img)
     return InferenceResponse(
         id=uuid.uuid4(),
         upload=UploadInfo(
@@ -31,5 +30,4 @@ async def create_inference(image: UploadFile) -> InferenceResponse:
             height=img.height,
             format=img.format,
         ),
-        cells=cells,
     )
