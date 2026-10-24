@@ -1,0 +1,12 @@
+@use '@carbon/styles/scss/theme' as *;
+@use '@carbon/styles/scss/spacing' as *;
+@use '@carbon/styles/scss/type' as *;
+
+.title {
+  @include type-style('heading-01');
+}
+
+.body {
+  margin-block-start: $spacing-02;
+  color: $text-secondary;
+}

@@ -1,0 +1,76 @@
+@use '@carbon/styles/scss/theme' as *;
+@use '@carbon/styles/scss/spacing' as *;
+@use '@carbon/styles/scss/type' as *;
+@use '@carbon/styles/scss/utilities/visually-hidden' as *;
+
+.heading {
+  @include type-style('label-01');
+  margin-block-end: $spacing-05;
+  color: $text-secondary;
+}
+
+.list {
+  list-style: none;
+}
+
+.stage {
+  display: flex;
+  gap: $spacing-04;
+  // 44px touch target per row.
+  min-block-size: 2.75rem;
+}
+
+.track {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-block-start: 2px;
+  color: $interactive;
+}
+
+.line {
+  flex: 1 1 auto;
+  inline-size: 1px;
+  margin-block-start: $spacing-02;
+  background: $border-subtle-00;
+
+  &[data-complete='true'] {
+    background: $interactive;
+  }
+}
+
+.button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 0 0 $spacing-04;
+  border: 0;
+  background: none;
+  color: $text-primary;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+
+  &:disabled {
+    color: $text-primary;
+    cursor: default;
+  }
+
+  &:not(:disabled):hover .name {
+    text-decoration: underline;
+  }
+}
+
+.name[data-current='true'] {
+  font-weight: 600;
+}
+
+.detail {
+  @include type-style('code-01');
+  color: $text-helper;
+}
+
+.visuallyHidden {
+  @include visually-hidden;
+}

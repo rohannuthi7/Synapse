@@ -18,11 +18,10 @@ interface ErrorBody {
 
 // The only module that calls fetch, so transport quirks are normalized in one
 // place and callers only ever see ApiError.
-export async function postForm<T>(path: string, form: FormData): Promise<T> {
+async function request<T>(path: string, init: RequestInit): Promise<T> {
   let response: Response
   try {
-    // No Content-Type header: the browser must generate the multipart boundary.
-    response = await fetch(BASE_URL + path, { method: 'POST', body: form })
+    response = await fetch(BASE_URL + path, init)
   } catch {
     throw new ApiError('NETWORK_ERROR', 'Could not reach the server.', 0)
   }
@@ -38,4 +37,13 @@ export async function postForm<T>(path: string, form: FormData): Promise<T> {
     )
   }
   return (await response.json()) as T
+}
+
+export function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
+  return request<T>(path, { method: 'GET', signal })
+}
+
+export function postForm<T>(path: string, form: FormData): Promise<T> {
+  // No Content-Type header: the browser must generate the multipart boundary.
+  return request<T>(path, { method: 'POST', body: form })
 }

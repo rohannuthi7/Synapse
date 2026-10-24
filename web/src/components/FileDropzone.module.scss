@@ -1,0 +1,102 @@
+@use '@carbon/styles/scss/theme' as *;
+@use '@carbon/styles/scss/spacing' as *;
+@use '@carbon/styles/scss/type' as *;
+@use '@carbon/styles/scss/utilities/visually-hidden' as *;
+@use '@carbon/styles/scss/components/button/tokens' as *;
+
+.figure {
+  margin: 0;
+}
+
+// The viewer slot itself, square, one layer above the page. The whole square
+// opens the picker; "Choose file" is its visible label.
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: $spacing-06;
+  box-sizing: border-box;
+  inline-size: 100%;
+  aspect-ratio: 1 / 1;
+  padding: $spacing-09;
+  border: 1px dashed $border-strong-01;
+  background: $layer-01;
+  cursor: pointer;
+
+  &:hover {
+    border-color: $border-inverse;
+  }
+
+  &[data-dragging='true'] {
+    border-style: solid;
+    border-color: $border-inverse;
+  }
+
+  &[aria-disabled='true'] {
+    cursor: not-allowed;
+
+    &:hover {
+      border-color: $border-strong-01;
+    }
+  }
+}
+
+.uploadIcon {
+  fill: $icon-secondary;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-03;
+}
+
+.title {
+  @include type-style('heading-03');
+}
+
+.hint {
+  color: $text-secondary;
+}
+
+// Looks like a Carbon primary button (48px, label left, icon right). It is
+// not a <button> because the <label> around it is what opens the picker.
+.chooseButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-07;
+  align-self: flex-start;
+  box-sizing: border-box;
+  min-inline-size: 12.5rem;
+  block-size: $spacing-09;
+  padding-inline: $spacing-05;
+  background: $button-primary;
+  color: $text-on-color;
+  fill: $icon-on-color;
+
+  .dropzone:hover & {
+    background: $button-primary-hover;
+  }
+
+  .dropzone:active & {
+    background: $button-primary-active;
+  }
+
+  .dropzone:has(.input:focus-visible) & {
+    outline: 2px solid $focus;
+    outline-offset: -2px;
+  }
+
+  .dropzone[aria-disabled='true'] & {
+    background: $button-disabled;
+    color: $text-on-color-disabled;
+    fill: $icon-on-color-disabled;
+  }
+}
+
+// Visually hidden but still focusable, so keyboard users can reach the picker.
+.input,
+.caption {
+  @include visually-hidden;
+}
