@@ -1,0 +1,15 @@
+@use '@carbon/styles/scss/theme' as *;
+@use '@carbon/styles/scss/spacing' as *;
+@use '@carbon/styles/scss/type' as *;
+
+.footer {
+  border-block-start: 1px solid $border-subtle-00;
+}
+
+.health {
+  @include type-style('code-01');
+  padding-block: $spacing-04;
+  color: $text-helper;
+  // Keeps the "·" separators spaced as written.
+  white-space: pre-wrap;
+}

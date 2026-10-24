@@ -1,31 +1,42 @@
 import { useState } from 'react'
 import type { ChangeEvent, DragEvent } from 'react'
-import styles from './FileDropzone.module.css'
+import { Add, Upload } from '@carbon/icons-react'
+import { ACCEPTED_IMAGE_TYPES, MAX_UPLOAD_BYTES } from '../pipeline/upload'
+import type { FileRejection } from '../pipeline/upload'
+import styles from './FileDropzone.module.scss'
 
 interface FileDropzoneProps {
   /** Called with the chosen file. Called with exactly one file; extra files are ignored. */
   onFileSelected: (file: File) => void
-  /** Comma-separated MIME list for the input's accept attribute and client-side drop filtering. */
-  accept?: string
-  /** Disables interaction and dims the box. */
+  /** Called instead of onFileSelected when the file's type or size is not allowed. */
+  onFileRejected?: (rejection: FileRejection) => void
+  /** MIME types for the input's accept attribute and client-side filtering. */
+  accept?: readonly string[]
+  /** Largest file, in bytes, handed to onFileSelected. */
+  maxBytes?: number
+  /** Disables interaction, e.g. while an upload is in flight. */
   disabled?: boolean
 }
 
 /**
- * Lets the user pick or drop a single file and hands it to the parent.
- * That is its only job: it never stores the file; the parent owns it.
+ * The empty viewer square: lets the user pick or drop a single file and hands
+ * it to the parent. That is its only job: it never stores the file; the
+ * parent owns it.
  */
 function FileDropzone({
   onFileSelected,
-  accept = 'image/png,image/jpeg',
+  onFileRejected,
+  accept = ACCEPTED_IMAGE_TYPES,
+  maxBytes = MAX_UPLOAD_BYTES,
   disabled = false,
 }: FileDropzoneProps) {
   const [isDragging, setIsDragging] = useState(false)
 
   const handleFile = (file: File | undefined) => {
     if (!file) return
-    const allowed = accept.split(',').map((t) => t.trim())
-    if (allowed.includes(file.type)) onFileSelected(file)
+    if (!accept.includes(file.type)) onFileRejected?.({ file, reason: 'type' })
+    else if (file.size > maxBytes) onFileRejected?.({ file, reason: 'size' })
+    else onFileSelected(file)
   }
 
   const handleDragOver = (event: DragEvent<HTMLLabelElement>) => {
@@ -47,33 +58,38 @@ function FileDropzone({
     event.target.value = ''
   }
 
-  const className = [
-    styles.dropzone,
-    isDragging && styles.dragging,
-    disabled && styles.disabled,
-  ]
-    .filter(Boolean)
-    .join(' ')
-
   return (
-    <label
-      className={className}
-      aria-disabled={disabled}
-      onDragEnter={handleDragOver}
-      onDragOver={handleDragOver}
-      onDragLeave={() => setIsDragging(false)}
-      onDrop={handleDrop}
-    >
-      <input
-        className={styles.input}
-        type="file"
-        accept={accept}
-        disabled={disabled}
-        onChange={handleChange}
-      />
-      Drop a handwritten digit here, or click to choose a file
-      <small className={styles.hint}>Accepted: {accept.split(',').join(', ')}</small>
-    </label>
+    <figure className={styles.figure}>
+      <label
+        className={styles.dropzone}
+        data-dragging={isDragging}
+        aria-disabled={disabled}
+        onDragEnter={handleDragOver}
+        onDragOver={handleDragOver}
+        onDragLeave={() => setIsDragging(false)}
+        onDrop={handleDrop}
+      >
+        <Upload size={32} className={styles.uploadIcon} aria-hidden="true" />
+        <span className={styles.text}>
+          <span className={styles.title}>Drag a PNG or JPEG here</span>
+          <span className={styles.hint}>or choose one from your computer. Max 10 MiB.</span>
+        </span>
+        <span className={styles.chooseButton}>
+          Choose file
+          <Add size={16} aria-hidden="true" />
+        </span>
+        <input
+          className={styles.input}
+          type="file"
+          accept={accept.join(',')}
+          disabled={disabled}
+          onChange={handleChange}
+        />
+      </label>
+      <figcaption className={styles.caption}>
+        Drop area. Accepts PNG or JPEG up to 10 MiB.
+      </figcaption>
+    </figure>
   )
 }
 

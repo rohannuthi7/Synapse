@@ -1,0 +1,49 @@
+// Carbon setup. Config must come first: fonts are self-hosted from
+// @fontsource (imported in main.tsx), so Carbon's CDN @font-face is off.
+@use '@carbon/styles/scss/config' with (
+  $css--font-face: false
+);
+@use '@carbon/styles/scss/themes';
+@use '@carbon/styles/scss/theme' as * with (
+  $theme: themes.$g100
+);
+@use '@carbon/styles/scss/reset';
+@use '@carbon/styles/scss/grid';
+// Size and density custom properties that Carbon v11 components read.
+@use '@carbon/styles/scss/layout';
+@use '@carbon/styles/scss/type' as *;
+@use '@carbon/styles/scss/components/button';
+
+:root {
+  @include theme();
+  color-scheme: dark;
+}
+
+body {
+  @include type-style('body-01');
+  background: $background;
+  color: $text-primary;
+}
+
+// Carbon's reset sets paragraphs in body-02 (16px); this page reads in the
+// productive body-01 (14px) throughout.
+p {
+  @include type-style('body-01');
+}
+
+a {
+  color: $link-primary;
+  text-decoration: none;
+
+  &:hover {
+    color: $link-primary-hover;
+    text-decoration: underline;
+  }
+}
+
+// One focus treatment for every control: Carbon's 2px $focus, drawn inside the
+// element so it is never clipped by a neighbour.
+:where(a, button, input, label):focus-visible {
+  outline: 2px solid $focus;
+  outline-offset: -2px;
+}

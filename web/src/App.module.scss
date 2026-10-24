@@ -1,0 +1,71 @@
+@use '@carbon/styles/scss/theme' as *;
+@use '@carbon/styles/scss/spacing' as *;
+@use '@carbon/styles/scss/breakpoint' as *;
+
+.page {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 100vh;
+}
+
+.main {
+  flex: 1 1 auto;
+}
+
+// The stage list owns the gutter to its right, so its rule sits midway
+// between the list and the viewer: 32px of space on each side.
+.stages {
+  padding-block: $spacing-06;
+  border-block-end: 1px solid $border-subtle-00;
+
+  @include breakpoint(md) {
+    margin-inline-end: 0;
+    padding-inline-end: $spacing-07;
+    border-block-end: 0;
+    border-inline-end: 1px solid $border-subtle-00;
+  }
+}
+
+.viewer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-07;
+  align-items: flex-start;
+  min-inline-size: 0;
+  padding-block: $spacing-07;
+
+  @include breakpoint(md) {
+    padding-inline-start: $spacing-05;
+  }
+}
+
+// The fixed 512px square and the action under it.
+.slot {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-05;
+  inline-size: 100%;
+  max-inline-size: 32rem;
+}
+
+// Same label-left, icon-right spacing as the primary "Choose file" above it;
+// Carbon's ghost variant would tuck the icon in 8px from the label.
+.sampleButton {
+  align-self: flex-start;
+  gap: $spacing-07;
+  padding-inline: $spacing-05;
+
+  :global(.cds--btn__icon) {
+    margin-inline-start: 0;
+  }
+}
+
+// Sits beside the square when there is room and wraps under it when not.
+.readout {
+  display: flex;
+  flex: 1 1 20rem;
+  flex-direction: column;
+  gap: $spacing-03;
+  min-inline-size: 0;
+  max-inline-size: 35rem;
+}

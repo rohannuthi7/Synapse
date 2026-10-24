@@ -14,3 +14,10 @@ export interface InferenceResponse {
   id: string
   upload: UploadInfo
 }
+
+export interface HealthResponse {
+  status: 'ok'
+  version: string
+  /** Git commit of the running build, or "unknown". */
+  commit: string
+}
