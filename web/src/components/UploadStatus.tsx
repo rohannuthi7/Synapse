@@ -1,55 +1,33 @@
-import type { UploadState } from '../hooks/useUploadDigit'
 import { PIPELINE_STAGES } from '../pipeline/stages'
-import { MAX_UPLOAD_BYTES } from '../pipeline/upload'
 import styles from './UploadStatus.module.scss'
 
 interface UploadStatusProps {
-  state: UploadState
+  /** The file on its way to the backend, if one is. */
+  uploading?: File
 }
 
-const MIB = 1024 * 1024
-
-function describe(state: UploadState): { title: string; body: string } {
-  switch (state.status) {
-    case 'idle':
-      return {
-        title: 'Waiting for an image',
-        body: `Nothing has been uploaded yet. The ${PIPELINE_STAGES.length} stages on the left run on the server, one after another, and each result plays back here in the same square.`,
-      }
-    case 'uploading':
-      return { title: `Uploading ${state.file.name}`, body: 'Sending the file to the backend.' }
-    case 'done': {
-      const { format, width, height, bytes } = state.result.upload
-      return {
-        title: 'Upload accepted',
-        body: `${format}, ${width} × ${height} px, ${bytes.toLocaleString('en-US')} bytes. The backend received, validated and decoded the file.`,
-      }
-    }
-    case 'rejected': {
-      const { file, reason } = state.rejection
-      return reason === 'type'
-        ? { title: 'File not accepted', body: `${file.name} is not a PNG or JPEG.` }
-        : {
-            title: 'File not accepted',
-            body: `${file.name} is ${(file.size / MIB).toFixed(1)} MiB; the limit is ${MAX_UPLOAD_BYTES / MIB} MiB.`,
-          }
-    }
-    case 'error':
-      return { title: 'Upload failed', body: `${state.error.message} (${state.error.code})` }
-    default: {
-      const _exhaustive: never = state
-      return _exhaustive
-    }
-  }
-}
-
-/** The readout's status line; a polite live region so each change is announced. */
-function UploadStatus({ state }: UploadStatusProps) {
-  const { title, body } = describe(state)
+/** The empty page's status line; a polite live region so the upload is announced. */
+function UploadStatus({ uploading }: UploadStatusProps) {
   return (
     <div role="status" aria-live="polite">
-      <p className={styles.title}>{title}</p>
-      <p className={styles.body}>{body}</p>
+      {uploading ? (
+        <>
+          <p className={styles.title}>Uploading {uploading.name}</p>
+          <p className={styles.body}>Sending the file to the backend.</p>
+        </>
+      ) : (
+        <>
+          <p className={styles.title}>Waiting for an image</p>
+          <p className={styles.body}>
+            Nothing has been uploaded yet. The {PIPELINE_STAGES.length} stages in the list run on the
+            server, one after another, and each result plays back here in the same square.
+          </p>
+          <p className={styles.body}>
+            The 8×8 grid is the input to a digit classifier we are building in SystemVerilog for a
+            DE1-SoC FPGA.
+          </p>
+        </>
+      )}
     </div>
   )
 }

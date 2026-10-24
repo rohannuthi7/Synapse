@@ -1,0 +1,76 @@
+@use '@carbon/styles/scss/theme' as *;
+@use '@carbon/styles/scss/spacing' as *;
+@use '@carbon/styles/scss/type' as *;
+@use '@carbon/styles/scss/breakpoint' as *;
+
+// md and up: labels in a 72px column beside their values. Narrow: each label
+// sits above its value, as in the mobile mockup.
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-04;
+  padding-block-start: $spacing-05;
+  border-block-start: 1px solid $border-subtle-00;
+
+  @include breakpoint(md) {
+    display: grid;
+    grid-template-columns: 4.5rem minmax(0, 1fr);
+    column-gap: $spacing-05;
+    row-gap: $spacing-04;
+    align-items: baseline;
+  }
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-02;
+
+  // Its two children become the grid's two cells.
+  @include breakpoint(md) {
+    display: contents;
+  }
+}
+
+.label {
+  @include type-style('label-01');
+  color: $text-secondary;
+}
+
+.functions {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-03;
+}
+
+.function {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-03 $spacing-05;
+  align-items: center;
+}
+
+// Carbon's inline code snippet look, without its copy-on-click button.
+.snippet {
+  @include type-style('code-02');
+  padding: $spacing-02 $spacing-03;
+  background: $layer-01;
+}
+
+// A function the main one calls, one step quieter.
+.helper {
+  @include type-style('code-02');
+  align-self: flex-start;
+  padding: $spacing-02 $spacing-03;
+  background: $layer-01;
+  color: $text-secondary;
+}
+
+.planned {
+  @include type-style('label-01');
+  color: $text-helper;
+}
+
+.inlineCode {
+  @include font-family('mono');
+}

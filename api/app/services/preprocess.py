@@ -1,5 +1,6 @@
 import io
 import struct
+from dataclasses import dataclass
 
 import numpy as np
 from PIL import Image, ImageOps, UnidentifiedImageError
@@ -122,17 +123,21 @@ def normalize_polarity(grid: np.ndarray) -> np.ndarray:
     the digit touches every edge fools the border check, and uneven lighting
     is not handled.
     """
+    if border_median(grid) > BRIGHT_BACKGROUND_CUTOFF:
+        return 255 - grid
+    # Copy so callers always get an array they own, whichever way this went.
+    return grid.copy()
+
+
+def border_median(grid: np.ndarray) -> float:
+    """Median brightness of the outermost rows and columns: the paper's level."""
     # Top/bottom rows have `width` values, left/right columns have `height`;
     # slicing the wrong axis fails silently on a non-square grid. Corners are
     # counted twice, which is harmless.
     border = np.concatenate([grid[0, :], grid[-1, :], grid[:, 0], grid[:, -1]])
-
     # Median, not mean: a mark or shadow touching part of the edge should not
     # outvote the paper.
-    if np.median(border) > BRIGHT_BACKGROUND_CUTOFF:
-        return 255 - grid
-    # Copy so callers always get an array they own, whichever way this went.
-    return grid.copy()
+    return float(np.median(border))
 
 
 def otsu_threshold(grid: np.ndarray) -> float:
@@ -227,14 +232,27 @@ def _pad_to_square(cropped: np.ndarray, background: int) -> np.ndarray:
     )
 
 
-def crop_and_center(grid: np.ndarray) -> np.ndarray:
-    """Return a square uint8 grid holding just the digit, centered, with a margin.
+@dataclass(frozen=True)
+class Crop:
+    """What crop_digit found, so a caller can show where the digit was."""
 
-    Expects an ink-bright grid (from normalize_polarity). Side is a multiple of
-    8 and at least 8, still full resolution and 0-255. Raises NoDigitFoundError
-    when there is no clearly brighter ink. Known limits, left on purpose:
-    uneven lighting is not handled, and centering uses the bounding box, not
-    the center of mass (a possible later improvement).
+    square: np.ndarray
+    cutoff: float
+    # Inclusive pixel bounds of the ink in the input grid.
+    top: int
+    bottom: int
+    left: int
+    right: int
+
+
+def crop_digit(grid: np.ndarray) -> Crop:
+    """Find the digit and return its padded square plus the cutoff and box used.
+
+    Expects an ink-bright grid (from normalize_polarity). The square's side is
+    a multiple of 8 and at least 8, still full resolution and 0-255. Raises
+    NoDigitFoundError when there is no clearly brighter ink. Known limits, left
+    on purpose: uneven lighting is not handled, and centering uses the
+    bounding box, not the center of mass (a possible later improvement).
     """
     if grid.ndim != 2 or grid.size == 0:
         raise ValueError("Expected a non-empty 2D grid.")
@@ -242,15 +260,26 @@ def crop_and_center(grid: np.ndarray) -> np.ndarray:
     if grid.dtype != np.uint8:
         raise ValueError(f"Expected a uint8 grid, got {grid.dtype}.")
 
-    mask = grid > otsu_threshold(grid)
+    cutoff = otsu_threshold(grid)
+    mask = grid > cutoff
     if not mask.any() or mask.all():
-        raise NoDigitFoundError()
-    if grid[mask].mean() - grid[~mask].mean() < MIN_INK_CONTRAST:
-        raise NoDigitFoundError()
+        raise NoDigitFoundError(detail="Every pixel has the same brightness.")
+    ink_mean = float(grid[mask].mean())
+    paper_mean = float(grid[~mask].mean())
+    if ink_mean - paper_mean < MIN_INK_CONTRAST:
+        raise NoDigitFoundError(
+            "Ink is not clearly brighter than the paper.",
+            detail=(
+                f"Ink mean {ink_mean:.0f}, paper mean {paper_mean:.0f}, "
+                f"gap {ink_mean - paper_mean:.0f} (needs {MIN_INK_CONTRAST})."
+            ),
+        )
 
     box = _find_ink_box(mask)
     if box is None:
-        raise NoDigitFoundError()
+        raise NoDigitFoundError(
+            detail=f"No row or column has {MIN_INK_PIXELS} or more ink pixels."
+        )
     top, bottom, left, right = box
 
     # Pad with the paper's brightness so the padding blends in; the median keeps
@@ -258,7 +287,12 @@ def crop_and_center(grid: np.ndarray) -> np.ndarray:
     background = int(np.median(grid[~mask]))
     # +1 because slice ends are exclusive but the box is inclusive.
     cropped = grid[top : bottom + 1, left : right + 1]
-    return _pad_to_square(cropped, background)
+    return Crop(_pad_to_square(cropped, background), cutoff, top, bottom, left, right)
+
+
+def crop_and_center(grid: np.ndarray) -> np.ndarray:
+    """Return a square uint8 grid holding just the digit, centered, with a margin."""
+    return crop_digit(grid).square
 
 
 def downsample(grid: np.ndarray, size: int = 8) -> np.ndarray:
@@ -284,3 +318,20 @@ def downsample(grid: np.ndarray, size: int = 8) -> np.ndarray:
     averaged = boxes.mean(axis=(1, 3))
     # Round to whole numbers, not truncate, so 99.9 becomes 100 and not 99.
     return np.rint(averaged).astype(np.uint8)
+
+
+def stretch_contrast(grid: np.ndarray) -> np.ndarray:
+    """Rescale a uint8 grid so its darkest value is 0 and its brightest 255.
+
+    The hardware multiplies each cell by a weight, so a faint photo that only
+    reaches 32-177 would score lower than a crisp one of the same digit.
+    A flat grid has no range to stretch and comes back unchanged.
+    """
+    if grid.dtype != np.uint8:
+        raise ValueError(f"Expected a uint8 grid, got {grid.dtype}.")
+    low, high = int(grid.min()), int(grid.max())
+    if high == low:
+        return grid.copy()
+    # Float first: (v - low) * 255 overflows uint8 long before the divide.
+    stretched = (grid.astype(np.float32) - low) * 255 / (high - low)
+    return np.rint(stretched).astype(np.uint8)

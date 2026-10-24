@@ -1,0 +1,80 @@
+@use '@carbon/styles/scss/theme' as *;
+@use '@carbon/styles/scss/motion' as *;
+@use '@carbon/styles/scss/spacing' as *;
+@use '@carbon/styles/scss/type' as *;
+
+$easing: motion(standard, productive);
+$speed: var(--playback-speed, 1);
+
+// Covers the whole square, one layer up from the page, like the mockup.
+.dump {
+  @include type-style('code-02');
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: $spacing-04;
+  box-sizing: border-box;
+  padding: $spacing-07 $spacing-06;
+  overflow-x: auto;
+  background: $layer-01;
+  line-height: 1.5rem;
+}
+
+.row {
+  display: flex;
+  gap: $spacing-05;
+  white-space: nowrap;
+
+  &[data-part='head'],
+  &[data-part='checksum'] {
+    color: $text-secondary;
+  }
+}
+
+// The head and checksum are marked once the frame is ready, with their
+// labels, so no underline shows under bytes that have not faded in yet.
+.dump[data-labelled='true'] .row:is([data-part='head'], [data-part='checksum']) .bytes {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.offset {
+  color: $text-helper;
+}
+
+.byte {
+  opacity: 0;
+  transition: opacity calc(#{$duration-fast-02} / #{$speed}) $easing
+    calc(var(--send-index) * 10ms / #{$speed});
+
+  .dump[data-shown='true'] & {
+    opacity: 1;
+  }
+}
+
+.label {
+  @include type-style('label-01');
+  @include font-family('sans');
+  opacity: 0;
+  transition: opacity calc(#{$duration-fast-02} / #{$speed}) $easing;
+
+  .dump[data-labelled='true'] & {
+    opacity: 1;
+  }
+}
+
+.dump[data-instant='true'] {
+  .byte,
+  .label {
+    transition: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .byte,
+  .label {
+    transition: none !important;
+  }
+}

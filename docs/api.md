@@ -1,5 +1,21 @@
 # Synapse API Setup
 
+## 0 - GET Request Information /api/health
+
+A wellness check called every 30 seconds.
+
+```json
+{
+  "status": "ok",
+  "version": "0.4",
+  "commit": "3fa1c2e"
+}
+```
+
+`version` is `API_VERSION` in `api/app/main.py` and changes every time we want to make a change to the api to communicate clearly with the frontend. 
+
+`commit` comes from the `SYNAPSE_COMMIT` environment variable and helps us debug in the future if there is an issue with code when a certain part was updated last.
+
 ## 1 - POST Request Information /api/inferences
 
 When the router receives a post request, it validates the incoming image's (named `image`) magic bytes to make sure that it has a valid file type and also checks the file size to make sure that it doesn't exceed a size of 10MiB.

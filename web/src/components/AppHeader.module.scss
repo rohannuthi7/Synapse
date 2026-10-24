@@ -1,6 +1,7 @@
 @use '@carbon/styles/scss/theme' as *;
 @use '@carbon/styles/scss/spacing' as *;
 @use '@carbon/styles/scss/type' as *;
+@use '@carbon/styles/scss/breakpoint' as *;
 
 .header {
   border-block-end: 1px solid $border-subtle-00;
@@ -8,11 +9,20 @@
 
 .row {
   display: flex;
-  flex-wrap: wrap;
   gap: $spacing-05;
   align-items: flex-end;
   justify-content: space-between;
   padding-block: $spacing-05;
+
+  // Narrow: the mark stays top right beside the title, as in the mobile
+  // mockup, and the description wraps under the title instead.
+  @include breakpoint-down(md) {
+    align-items: flex-start;
+  }
+
+  > div {
+    min-inline-size: 0;
+  }
 }
 
 .title {
@@ -25,15 +35,15 @@
   color: $text-secondary;
 }
 
-// 48x48 hit area around a 20px mark; the negative margin keeps the icon
-// optically aligned with the text edge instead of the hit area's edge.
+// 48x48 hit area around a 32px mark; the negative margin puts the mark's
+// right edge on the page edge instead of the hit area's.
 .repoLink {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   inline-size: $spacing-09;
   block-size: $spacing-09;
-  margin: (-$spacing-03) (-$spacing-04) (-$spacing-03) 0;
+  margin: (-$spacing-03) (-$spacing-03) (-$spacing-03) 0;
   color: $icon-primary;
 
   &:hover {

@@ -8,9 +8,9 @@ import styles from './FileDropzone.module.scss'
 interface FileDropzoneProps {
   /** Called with the chosen file. Called with exactly one file; extra files are ignored. */
   onFileSelected: (file: File) => void
-  /** Called instead of onFileSelected when the file's type or size is not allowed. */
+  /** Called instead of onFileSelected when the file is over `maxBytes`. */
   onFileRejected?: (rejection: FileRejection) => void
-  /** MIME types for the input's accept attribute and client-side filtering. */
+  /** MIME types the file picker offers. */
   accept?: readonly string[]
   /** Largest file, in bytes, handed to onFileSelected. */
   maxBytes?: number
@@ -32,10 +32,11 @@ function FileDropzone({
 }: FileDropzoneProps) {
   const [isDragging, setIsDragging] = useState(false)
 
+  // Only size is checked here. A wrong type goes to the server, whose
+  // signature check is the one that counts and is shown in the error view.
   const handleFile = (file: File | undefined) => {
     if (!file) return
-    if (!accept.includes(file.type)) onFileRejected?.({ file, reason: 'type' })
-    else if (file.size > maxBytes) onFileRejected?.({ file, reason: 'size' })
+    if (file.size > maxBytes) onFileRejected?.({ file, reason: 'size' })
     else onFileSelected(file)
   }
 

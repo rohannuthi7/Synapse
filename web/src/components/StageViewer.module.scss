@@ -1,0 +1,141 @@
+@use '@carbon/styles/scss/theme' as *;
+@use '@carbon/styles/scss/motion' as *;
+@use '@carbon/styles/scss/spacing' as *;
+@use '@carbon/styles/scss/type' as *;
+@use '@carbon/styles/scss/utilities/visually-hidden' as *;
+
+// Carbon duration tokens, slowed or sped by the playback speed set on the figure.
+@function playback-duration($token) {
+  @return calc(#{$token} / var(--playback-speed, 1));
+}
+
+$easing: motion(standard, productive);
+$sweep: playback-duration($duration-slow-01) $easing;
+
+.viewer {
+  position: relative;
+  inline-size: 100%;
+  aspect-ratio: 1 / 1;
+  margin: 0;
+  overflow: hidden;
+  background: $layer-01;
+}
+
+// Holds the picture and the crop marks, and zooms as one piece so the box
+// stays on the ink while it grows to fill the square.
+.cropLayer {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 0;
+
+  &[data-zoom='zooming'] {
+    transition: transform playback-duration($duration-slow-01) $easing;
+  }
+}
+
+.image {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: contain;
+  // Show the pixels as stored, so a sideways photo looks sideways until the
+  // orientation stage turns it.
+  image-orientation: none;
+
+  &[data-wipe='hidden'] {
+    clip-path: inset(0 0 100% 0);
+  }
+
+  &[data-wipe='revealing'] {
+    clip-path: inset(0);
+    transition: clip-path $sweep;
+  }
+}
+
+// A full-size box whose top edge is the 1px line, so translating the box by
+// 100% carries the line from the top of the square to the bottom.
+.scanLine {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+
+  &::before {
+    content: '';
+    display: block;
+    block-size: 1px;
+    background: $icon-on-color;
+  }
+
+  &[data-scan='ready'],
+  &[data-scan='sweeping'] {
+    opacity: 1;
+  }
+
+  &[data-scan='sweeping'] {
+    transform: translateY(100%);
+    transition: transform $sweep;
+  }
+}
+
+.dim {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  opacity: 0;
+  fill: $background;
+  fill-opacity: 0.72;
+  transition: opacity playback-duration($duration-slow-02) $easing;
+
+  &[data-shown='true'] {
+    opacity: 1;
+  }
+}
+
+.box {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1px solid $icon-on-color;
+  opacity: 0;
+  transition: opacity playback-duration($duration-moderate-02) $easing;
+
+  &[data-shown='true'] {
+    opacity: 1;
+  }
+}
+
+// 24px above the box's top edge, like the mockup.
+.boxLabel {
+  @include type-style('code-01');
+  position: absolute;
+  inset-block-end: 100%;
+  inset-inline-start: 0;
+  margin-block-end: $spacing-03;
+  color: $text-primary;
+  white-space: nowrap;
+}
+
+// A jump or pause shows the stage's end state at once.
+.viewer[data-settled='true'] {
+  .cropLayer,
+  .dim,
+  .box {
+    transition: none;
+  }
+}
+
+.caption {
+  @include visually-hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .image,
+  .scanLine,
+  .cropLayer,
+  .dim,
+  .box {
+    transition: none !important;
+  }
+}

@@ -1,0 +1,21 @@
+@use '@carbon/styles/scss/theme' as *;
+@use '@carbon/styles/scss/spacing' as *;
+@use '@carbon/styles/scss/type' as *;
+
+.list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $spacing-05;
+  padding-block-start: $spacing-05;
+  border-block-start: 1px solid $border-subtle-00;
+}
+
+.label {
+  @include type-style('label-01');
+  color: $text-secondary;
+}
+
+.value {
+  @include type-style('code-02');
+  margin-block-start: $spacing-02;
+}

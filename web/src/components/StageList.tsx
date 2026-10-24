@@ -11,6 +11,8 @@ export interface StageListItem {
   detail?: string
   /** Only stages the run has already reached can be jumped to. */
   selectable: boolean
+  /** A stage the backend does not run yet; labelled so instead of looking unreached. */
+  planned?: boolean
 }
 
 interface StageListProps {
@@ -54,8 +56,14 @@ function StageList({ items, onSelect }: StageListProps) {
                 <span className={styles.name} data-current={item.status === 'current'}>
                   {item.label}
                 </span>
-                <span className={styles.visuallyHidden}>{STATUS_TEXT[item.status]}</span>
-                {item.detail && <span className={styles.detail}>{item.detail}</span>}
+                <span className={styles.visuallyHidden}>
+                  {item.planned ? 'Planned, not built yet' : STATUS_TEXT[item.status]}
+                </span>
+                {item.planned ? (
+                  <span className={styles.detail}>Planned</span>
+                ) : (
+                  item.detail && <span className={styles.detail}>{item.detail}</span>
+                )}
               </button>
             </li>
           )

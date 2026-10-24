@@ -33,12 +33,12 @@ describe('FileDropzone', () => {
     expect(onFileSelected).toHaveBeenCalledWith(file)
   })
 
-  it('rejects a dropped .txt file by type', () => {
+  it('passes a dropped .txt file on, so the server gives the real verdict', () => {
     const { onFileSelected, onFileRejected, box } = setup()
     const file = new File(['x'], 'a.txt', { type: 'text/plain' })
     fireEvent.drop(box, { dataTransfer: { files: [file] } })
-    expect(onFileSelected).not.toHaveBeenCalled()
-    expect(onFileRejected).toHaveBeenCalledWith({ file, reason: 'type' })
+    expect(onFileSelected).toHaveBeenCalledWith(file)
+    expect(onFileRejected).not.toHaveBeenCalled()
   })
 
   it('rejects a file over maxBytes by size', () => {

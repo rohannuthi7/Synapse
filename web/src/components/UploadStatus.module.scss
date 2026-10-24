@@ -9,4 +9,8 @@
 .body {
   margin-block-start: $spacing-02;
   color: $text-secondary;
+
+  & + & {
+    margin-block-start: $spacing-05;
+  }
 }

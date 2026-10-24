@@ -1,0 +1,25 @@
+@use '@carbon/styles/scss/theme' as *;
+@use '@carbon/styles/scss/spacing' as *;
+@use '@carbon/styles/scss/type' as *;
+
+.title {
+  @include type-style('heading-01');
+  display: flex;
+  align-items: center;
+  gap: $spacing-03;
+}
+
+.detail {
+  @include type-style('code-02');
+}
+
+// Used once, on the finished frame; success green is reserved for it.
+.ready {
+  flex: none;
+  fill: $support-success;
+}
+
+.status {
+  margin-block-start: $spacing-02;
+  color: $text-secondary;
+}
